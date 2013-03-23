@@ -62,7 +62,17 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/notification_panel_header_height"
             />
-
+        
+        <LinearLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:systemui="http://schemas.android.com/apk/res/com.android.systemui"
+            android:id="@+id/quick_toggles"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone" 
+            />
+        
         <TextView
             android:id="@+id/emergency_calls_only"
             android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Network.EmergencyOnly"
@@ -99,4 +109,23 @@
             </ScrollView>
         </FrameLayout>
     </LinearLayout>
+    <HorizontalScrollView
+        android:id="@+id/custom_notification_scrollview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:requiresFadingEdge="none"
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        android:layout_above="@id/handle"
+        android:layout_gravity="bottom"
+        android:visibility="invisible"
+        android:layout_marginBottom="@dimen/notification_shortcuts_close_handle_height">
+
+        <com.android.systemui.statusbar.phone.ShortcutsWidget
+            android:id="@+id/custom_notificiation_shortcuts"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            />
+    </HorizontalScrollView>
 </com.android.systemui.statusbar.phone.NotificationPanelView><!-- end of sliding panel -->
