@@ -276,6 +276,20 @@ public final class Settings {
             "android.settings.DISPLAY_SETTINGS";
 
     /**
+     * Activity Action: Show settings to allow configuration of display.
+     * <p>
+     * In some cases, a matching Activity may not exist, so ensure you
+     * safeguard against this.
+     * <p>
+     * Input: Nothing.
+     * <p>
+     * Output: Nothing.
+     */
+    @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)
+    public static final String ACTION_NOTIFICATION_SHORTCUTS_SETTINGS =
+            "android.settings.slim.notificationshortcuts.NOTIFICATION_SHORTCUTS";
+
+    /**
      * Activity Action: Show settings to allow configuration of locale.
      * <p>
      * In some cases, a matching Activity may not exist, so ensure you
@@ -2556,6 +2570,27 @@ public final class Settings {
         */
         public static final String NAVIGATION_BAR_LEFTY_MODE = "navigation_bar_lefty_mode";
 
+        /**
+         * Custom Spen Actions
+         *
+         * @hide
+         */
+        public static final String[] SPEN_ACTIONS = new String[] {
+                "spen_action_left",
+                "spen_action_right",
+                "spen_action_down",
+                "spen_action_up",
+                "spen_action_double",
+                "spen_action_long",
+        };
+
+        /**
+         * Setting to enable Spen actions.
+         *
+         * @hide
+         */
+        public static final String ENABLE_SPEN_ACTIONS = "enable_spen_actions";
+
        /**
         *
         * @hide
@@ -2620,6 +2655,19 @@ public final class Settings {
                 "navring_long_2",
                 "navring_long_3",
                 "navring_long_4",
+        };
+
+        /**
+         * Custom navring icons
+         *
+         * @hide
+         */
+        public static final String[] SYSTEMUI_NAVRING_ICON = new String[] {
+                "navring_icon_0",
+                "navring_icon_1",
+                "navring_icon_2",
+                "navring_icon_3",
+                "navring_icon_4",
         };
 
         /**
@@ -2985,7 +3033,7 @@ public final class Settings {
         public static final String PIE_CONTROLS = "pie_controls";
 
         /**
-         * Pie menu, should default to 0 (no, show only when needed)
+         * Pie menu, should default to 1 (yes, show)
          * @hide
          */
         public static final String PIE_MENU = "pie_menu";
@@ -2997,7 +3045,7 @@ public final class Settings {
         public static final String PIE_SEARCH = "pie_search";
 
         /**
-         * Pie will not rotate. Should default to 0 (no, rotate)
+         * Pie will not rotate. Should default to 1 (yes, do not rotate)
          * @hide
          */
         public static final String PIE_STICK = "pie_stick";
@@ -3008,8 +3056,8 @@ public final class Settings {
          */
         public static final String PIE_LAST_APP = "pie_last_app";
 
-        /*
-         * Pie gap angle, should default to 1
+        /**
+         * Pie gap angle, should default to 3
          * @hide
          */
         public static final String PIE_GAP = "pie_gap";
@@ -3115,7 +3163,11 @@ public final class Settings {
          */
         public static final String PIE_CENTER = "pie_center";
 
-       // PIE COLORS EVERYWHERE! //
+        /**
+         * Swap volume buttons when the screen is rotated by 90 or 180 degrees
+         * @hide
+         */
+        public static final String SWAP_VOLUME_KEYS = "swap_volume_keys";
 
         /**
          * whether to hide the signal barss
@@ -3422,6 +3474,12 @@ public final class Settings {
          * @hide
          */
         public static final String LOCKSCREEN_SEE_THROUGH = "lockscreen_see_through";
+
+        /**	
+         * Give MMS Notifications a breathing effect
+         * @hide
+         */
+        public static final String MMS_BREATH = "mms_breath";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
@@ -3791,6 +3849,58 @@ public final class Settings {
          * @hide
          */
         public static final String STATUS_BAR_ALPHA_CONFIG = "status_bar_alpha_config";
+
+        /**
+         * @hide
+         */
+        public static final String TOGGLES_STYLE = "toggls_style";
+
+        /**
+         * @hide
+         * Show Wifi network name in notification shade
+         * 0 - don't show
+         * 1 - show
+         */
+        public static final String NOTIFICATION_SHOW_WIFI_SSID = "notification_show_wifi_ssid";
+
+        /**
+         * Whether to enable notification shortcuts (toggle)
+         *
+         * @hide
+         */
+
+        public static final String NOTIFICATION_SHORTCUTS_TOGGLE = "pref_notification_shortcuts_toggle";
+
+        /**
+         * Stores the number of notification shortcuts to display settings for
+         * @hide
+         */
+        public static final String NOTIFICATION_SHORTCUTS_QUANTITY = "pref_notification_shortcuts_quantity";
+
+        /**
+         * Stores values for notification shortcut targets
+         * @hide
+         */
+        public static final String NOTIFICATION_SHORTCUTS_TARGETS = "notification_shortcuts_targets";
+
+        /**
+         * Stores the value for notification shortcuts icon color
+         * @hide
+         */
+        public static final String NOTIFICATION_SHORTCUTS_COLOR = "notification_shortcuts_color";
+
+        /**
+         * Whether to colorize the default application icons
+         * @hide
+         */
+        public static final String NOTIFICATION_SHORTCUTS_COLORIZE_TOGGLE = "notification_shortcuts_colorize_toggle";
+
+        /**
+         * Whether to colorize the default application icons
+         * @hide
+         */
+        public static final String NOTIFICATION_SHORTCUTS_HIDE_CARRIER = "notification_shortcuts_hide_carrier";
+
     }
 
     /**
@@ -5308,6 +5418,12 @@ public final class Settings {
          * @hide
          */
         public static final String SCREENSAVER_DEFAULT_COMPONENT = "screensaver_default_component";
+
+        /**
+         * If screensavers are enabled, whether the screensaver should be automatically launched
+         * when charging wirelessly.
+         */
+        public static final String SCREENSAVER_ACTIVATE_ON_WIRELESS_CHARGE = "screensaver_activate_on_wireless_charger";
 
         /**
          * Notifications Expand Behaviour
