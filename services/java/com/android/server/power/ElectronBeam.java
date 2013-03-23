@@ -753,4 +753,3 @@ final class ElectronBeam {
         }
     }
 }
-
