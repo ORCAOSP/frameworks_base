@@ -4,6 +4,7 @@ include $(CLEAR_VARS)
 LOCAL_CFLAGS += -DHAVE_CONFIG_H -DKHTML_NO_EXCEPTIONS -DGKWQ_NO_JAVA
 LOCAL_CFLAGS += -DNO_SUPPORT_JS_BINDING -DQT_NO_WHEELEVENT -DKHTML_NO_XBL
 LOCAL_CFLAGS += -U__APPLE__
+LOCAL_CFLAGS += -fno-strict-aliasing
 
 ifeq ($(TARGET_ARCH), arm)
 	LOCAL_CFLAGS += -DPACKED="__attribute__ ((packed))"
@@ -81,6 +82,7 @@ LOCAL_SRC_FILES:= \
 	android_util_AssetManager.cpp \
 	android_util_Binder.cpp \
 	android_util_EventLog.cpp \
+    android_util_ExtendedPropertiesUtils.cpp \
 	android_util_Log.cpp \
 	android_util_FloatMath.cpp \
 	android_util_Process.cpp \

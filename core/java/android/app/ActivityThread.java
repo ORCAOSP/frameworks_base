@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2006 The Android Open Source Project
+ * This code has been modified.  Portions copyright (C) 2012, ParanoidAndroid Project.
  * This code has been modified.  Portions copyright (C) 2010, T-Mobile USA, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -76,9 +77,12 @@ import android.os.SystemProperties;
 import android.text.TextUtils;
 import android.os.Trace;
 import android.os.UserHandle;
+import android.provider.Settings;
+import android.text.TextUtils;
 import android.util.AndroidRuntimeException;
 import android.util.DisplayMetrics;
 import android.util.EventLog;
+import android.util.ExtendedPropertiesUtils;
 import android.util.Log;
 import android.util.LogPrinter;
 import android.util.PrintWriterPrinter;
@@ -1711,6 +1715,7 @@ public final class ActivityThread {
         //}
 
         AssetManager assets = new AssetManager();
+        assets.overrideHook(resDir, ExtendedPropertiesUtils.OverrideMode.FullNameExclude);
         assets.setThemeSupport(compInfo.isThemeable);
         if (assets.addAssetPath(resDir) == 0) {
             return null;
@@ -1730,6 +1735,7 @@ public final class ActivityThread {
 
         //Slog.i(TAG, "Resource: key=" + key + ", display metrics=" + metrics);
         DisplayMetrics dm = getDisplayMetricsLocked(displayId, null);
+        dm.overrideHook(assets, ExtendedPropertiesUtils.OverrideMode.ExtendedProperties);
         Configuration config;
         boolean isDefaultDisplay = (displayId == Display.DEFAULT_DISPLAY);
         if (!isDefaultDisplay || key.mOverrideConfiguration != null) {
@@ -2855,6 +2861,7 @@ public final class ActivityThread {
                     deliverResults(r, r.pendingResults);
                     r.pendingResults = null;
                 }
+
                 r.activity.performResume();
 
                 EventLog.writeEvent(LOG_ON_RESUME_CALLED,
@@ -3280,6 +3287,7 @@ public final class ActivityThread {
 
     private void updateVisibility(ActivityClientRecord r, boolean show) {
         View v = r.activity.mDecor;
+
         if (v != null) {
             if (show) {
                 if (!r.activity.mVisibleFromServer) {
@@ -3349,7 +3357,7 @@ public final class ActivityThread {
             Log.w(TAG, "handleWindowVisibility: no activity for token " + token);
             return;
         }
-        
+
         if (!show && !r.stopped) {
             performStopActivityInner(r, null, show, false);
         } else if (show && r.stopped) {
@@ -4301,6 +4309,8 @@ public final class ActivityThread {
     private void handleBindApplication(AppBindData data) {
         mBoundApplication = data;
         mConfiguration = new Configuration(data.config);
+        mConfiguration.active = true;
+        mConfiguration.overrideHook(data.processName, ExtendedPropertiesUtils.OverrideMode.PackageName);
         mCompatConfiguration = new Configuration(data.config);
 
         mProfiler = new Profiler();
@@ -4646,6 +4656,8 @@ public final class ActivityThread {
                                 + "snatched provider from the jaws of death");
                     }
                     prc.removePending = false;
+                    // There is a race! It fails to remove the message, which
+                    // will be handled in completeRemoveProvider().
                     mH.removeMessages(H.REMOVE_PROVIDER, prc);
                 } else {
                     unstableDelta = 0;
@@ -4825,6 +4837,11 @@ public final class ActivityThread {
                 return;
             }
 
+            // More complicated race!! Some client managed to acquire the
+            // provider and release it before the removal was completed.
+            // Continue the removal, and abort the next remove message.
+            prc.removePending = false;
+
             final IBinder jBinder = prc.holder.provider.asBinder();
             ProviderRefCount existingPrc = mProviderRefCountMap.get(jBinder);
             if (existingPrc == prc) {
@@ -4839,17 +4856,17 @@ public final class ActivityThread {
                     iter.remove();
                 }
             }
-        }
 
-        try {
-            if (DEBUG_PROVIDER) {
-                Slog.v(TAG, "removeProvider: Invoking ActivityManagerNative."
-                        + "removeContentProvider(" + prc.holder.info.name + ")");
+            try {
+                if (DEBUG_PROVIDER) {
+                    Slog.v(TAG, "removeProvider: Invoking ActivityManagerNative."
+                            + "removeContentProvider(" + prc.holder.info.name + ")");
+                }
+                ActivityManagerNative.getDefault().removeContentProvider(
+                        prc.holder.connection, false);
+            } catch (RemoteException e) {
+                //do nothing content provider object is dead any way
             }
-            ActivityManagerNative.getDefault().removeContentProvider(
-                    prc.holder.connection, false);
-        } catch (RemoteException e) {
-            //do nothing content provider object is dead any way
         }
     }
 
@@ -5116,6 +5133,7 @@ public final class ActivityThread {
         HardwareRenderer.disable(true);
         ActivityThread thread = new ActivityThread();
         thread.attach(true);
+        ContextImpl.init(thread);
         return thread;
     }
 
@@ -5180,6 +5198,7 @@ public final class ActivityThread {
 
         ActivityThread thread = new ActivityThread();
         thread.attach(false);
+        ContextImpl.init(thread);
 
         if (sMainThreadHandler == null) {
             sMainThreadHandler = thread.getHandler();

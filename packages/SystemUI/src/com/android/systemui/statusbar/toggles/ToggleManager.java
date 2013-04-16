@@ -14,12 +14,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationUtils;
 import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 
 import com.android.systemui.R;
@@ -81,23 +84,27 @@ public class ToggleManager {
     public static final String LTE_TOGGLE = "LTE";
     public static final String FAV_CONTACT_TOGGLE = "FAVCONTACT";
     public static final String SOUND_STATE_TOGGLE = "SOUNDSTATE";
+    public static final String VOLUME_TOGGLE = "VOLUME";
     public static final String NAVBAR_HIDE_TOGGLE = "NAVBARHIDE";
     public static final String QUICKRECORD_TOGGLE = "QUICKRECORD";
     public static final String POWERMENU_TOGGLE = "POWERMENU";
     public static final String PROFILE_TOGGLE = "PROFILE";
     public static final String STATUSBAR_TOGGLE = "STATUSBAR";
     public static final String QUIETHOURS_TOGGLE = "QUIETHOURS";
-    public static final String ORCATOOLS_TOGGLE = "ORCATOOLS";
     public static final String SLEEP_TOGGLE = "SLEEP";
     public static final String PIE_TOGGLE = "PIE";
+    public static final String SCREENSHOT_TOGGLE = "SCREENSHOT";
+    public static final String REBOOT_TOGGLE = "REBOOT";
+    public static final String CUSTOM_TOGGLE = "CUSTOM";
 
     private int mStyle;
 
     public static final int STYLE_TILE = 0;
     public static final int STYLE_SWITCH = 1;
     public static final int STYLE_TRADITIONAL = 2;
+    public static final int STYLE_SCROLLABLE = 3;
 
-    private ViewGroup[] mContainers = new ViewGroup[3];
+    private ViewGroup[] mContainers = new ViewGroup[4];
 
     Context mContext;
     BroadcastReceiver mBroadcastReceiver;
@@ -134,15 +141,18 @@ public class ToggleManager {
             toggleMap.put(LTE_TOGGLE, LteToggle.class);
             toggleMap.put(FAV_CONTACT_TOGGLE, FavoriteUserToggle.class);
             toggleMap.put(SOUND_STATE_TOGGLE, SoundStateToggle.class);
+            toggleMap.put(VOLUME_TOGGLE, VolumeToggle.class);
             toggleMap.put(NAVBAR_HIDE_TOGGLE, NavbarHideToggle.class);
             toggleMap.put(QUICKRECORD_TOGGLE, QuickRecordToggle.class);
             toggleMap.put(POWERMENU_TOGGLE, PowerMenuToggle.class);
             toggleMap.put(PROFILE_TOGGLE, ProfileToggle.class);
-            toggleMap.put(STATUSBAR_TOGGLE, StatusBarToggle.class);
+            toggleMap.put(STATUSBAR_TOGGLE, StatusbarToggle.class);
             toggleMap.put(QUIETHOURS_TOGGLE, QuietHoursToggle.class);
-            toggleMap.put(ORCATOOLS_TOGGLE, OrcaToolsToggle.class);
             toggleMap.put(SLEEP_TOGGLE, SleepToggle.class);
             toggleMap.put(PIE_TOGGLE, PieToggle.class);
+            toggleMap.put(SCREENSHOT_TOGGLE, ScreenshotToggle.class);
+            toggleMap.put(REBOOT_TOGGLE, RebootToggle.class);
+            toggleMap.put(CUSTOM_TOGGLE, CustomToggle.class);
             // toggleMap.put(BT_TETHER_TOGGLE, null);
         }
         return toggleMap;
@@ -161,6 +171,7 @@ public class ToggleManager {
             }
         };
         mContext.registerReceiver(mBroadcastReceiver, new IntentFilter(ACTION_REQUEST_TOGGLES));
+
     }
 
     public void cleanup() {
@@ -228,10 +239,56 @@ public class ToggleManager {
                                 params);
             }
 
-            for (LinearLayout row : rows)
+            for (LinearLayout row : rows) {
+                if (row == rows.get(rows.size() - 1)) { // last row - need spacers
+                    if (row.getChildCount() < widgetsPerRow) {
+                        View spacer_front = new View(mContext);
+                        View spacer_end = new View(mContext);
+                        spacer_front.setBackgroundResource(R.drawable.qs_tile_background);
+                        spacer_end.setBackgroundResource(R.drawable.qs_tile_background);
+                        params.weight = 2f; // change weight so spacers grow
+                        row.addView(spacer_front,0, params);
+                        row.addView(spacer_end, params);
+                    }
+                }
                 mContainers[STYLE_TRADITIONAL].addView(row);
+            }
 
             mContainers[STYLE_TRADITIONAL].setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void setupScrollable() {
+
+        if (mContainers[STYLE_SCROLLABLE] != null) {
+            updateToggleList();
+
+            mContainers[STYLE_SCROLLABLE].removeAllViews();
+            ArrayList<LinearLayout> rows = new ArrayList<LinearLayout>();
+            rows.add(new LinearLayout(mContext)); // add first row
+
+            LinearLayout.LayoutParams params = getScrollableToggleParams(mContext);
+
+            for (int i = 0; i < mToggles.size(); i++) {
+                rows.get(rows.size() - 1)
+                        .addView(mToggles.get(i).createTraditionalView(),
+                                params);
+            }
+            LinearLayout togglesRowLayout;
+            HorizontalScrollView toggleScrollView = new HorizontalScrollView(mContext);
+            togglesRowLayout = rows.get(rows.size() - 1);
+            togglesRowLayout.setGravity(Gravity.CENTER_HORIZONTAL);
+            toggleScrollView.setHorizontalFadingEdgeEnabled(true);
+            toggleScrollView.addView(togglesRowLayout,new LinearLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+            LinearLayout ll = new LinearLayout(mContext);
+            ll.setOrientation(LinearLayout.VERTICAL);
+            ll.setGravity(Gravity.CENTER_HORIZONTAL);
+            ll.addView(toggleScrollView,new LinearLayout.LayoutParams(
+                    LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
+            mContainers[STYLE_SCROLLABLE].addView(ll);
+
+            mContainers[STYLE_SCROLLABLE].setVisibility(View.VISIBLE);
         }
     }
 
@@ -346,6 +403,9 @@ public class ToggleManager {
                     break;
                 case STYLE_TRADITIONAL:
                     setupTraditional();
+                    break;
+                case STYLE_SCROLLABLE:
+                    setupScrollable();
                     break;
             }
         }
@@ -470,6 +530,12 @@ public class ToggleManager {
                         R.dimen.toggle_row_height), 1f);
     }
 
+    private static LinearLayout.LayoutParams getScrollableToggleParams(Context c) {
+        return new LinearLayout.LayoutParams(
+                c.getResources().getDimensionPixelSize(R.dimen.toggle_traditional_width),
+                c.getResources().getDimensionPixelSize(R.dimen.toggle_traditional_height));
+    }
+
     private static FrameLayout.LayoutParams getTileParams(Context c) {
         return new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT, c.getResources().getDimensionPixelSize(
@@ -483,6 +549,54 @@ public class ToggleManager {
     public boolean shouldFlipToSettings() {
         if (mContainers[STYLE_TRADITIONAL] != null) {
             final ViewGroup c = mContainers[STYLE_TRADITIONAL];
+            if (c.getVisibility() == View.VISIBLE) {
+                Animation a =
+                        AnimationUtils.makeOutAnimation(mContext, true);
+                a.setDuration(400);
+                a.setAnimationListener(new AnimationListener() {
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+                        c.setVisibility(View.GONE);
+                        // Settings.System.putInt(mContext.getContentResolver(),
+                        // Settings.System.STATUSBAR_TOGGLES_VISIBILITY, 0);
+                    }
+
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+                    }
+                });
+                c.startAnimation(a);
+            } else {
+                Animation a =
+                        AnimationUtils.makeInAnimation(mContext, true);
+                a.setDuration(400);
+                a.setAnimationListener(new AnimationListener() {
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+                    }
+
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+                        c.setVisibility(View.VISIBLE);
+                        // Settings.System.putInt(mContext.getContentResolver(),
+                        // Settings.System.STATUSBAR_TOGGLES_VISIBILITY, 1);
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+                    }
+                });
+                c.startAnimation(a);
+            }
+        }
+        if (mContainers[STYLE_SCROLLABLE] != null) {
+            final ViewGroup c = mContainers[STYLE_SCROLLABLE];
             if (c.getVisibility() == View.VISIBLE) {
                 Animation a =
                         AnimationUtils.makeOutAnimation(mContext, true);
