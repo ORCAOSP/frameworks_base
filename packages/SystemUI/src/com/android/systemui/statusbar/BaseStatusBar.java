@@ -101,6 +101,7 @@ import com.android.systemui.statusbar.view.PieStatusPanel;
 import com.android.systemui.statusbar.view.PieExpandPanel;
 import com.android.systemui.statusbar.WidgetView;
 import com.android.systemui.TransparencyManager;
+import com.android.systemui.aokp.AokpSwipeRibbon;
 
 import java.util.ArrayList;
 import java.math.BigInteger;
@@ -123,6 +124,7 @@ public abstract class BaseStatusBar extends SystemUI implements
     protected int mCurrentUIMode;
 
     private WidgetView mWidgetView;
+    private AokpSwipeRibbon mAokpSwipeRibbon;
 
     protected static final boolean ENABLE_INTRUDERS = false;
 
@@ -390,6 +392,9 @@ public abstract class BaseStatusBar extends SystemUI implements
         createAndAddWindows();
         // create WidgetView
         mWidgetView = new WidgetView(mContext,null);
+        mAokpSwipeRibbon = new AokpSwipeRibbon(mContext,null,"bottom");
+        mAokpSwipeRibbon = new AokpSwipeRibbon(mContext,null,"left");
+        mAokpSwipeRibbon = new AokpSwipeRibbon(mContext,null,"right");
         disable(switches[0]);
         setSystemUiVisibility(switches[1], 0xffffffff);
         topAppWindowChanged(switches[2] != 0);
@@ -521,14 +526,10 @@ public abstract class BaseStatusBar extends SystemUI implements
     }
 
     private boolean showPie() {
-        boolean expanded = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1;
-        boolean navbarZero = Integer.parseInt(ExtendedPropertiesUtils
-                .getProperty("com.android.systemui.navbar.dpi", "100")) == 0;
         boolean pie = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.PIE_CONTROLS, 0) == 1;
 
-        return (expanded || navbarZero || pie);
+        return (pie);
     }
 
     public void updatePieControls() {
@@ -1290,10 +1291,6 @@ public abstract class BaseStatusBar extends SystemUI implements
                     // the stack trace isn't very helpful here.  Just log the exception message.
                     Slog.w(TAG, "Sending contentIntent failed: " + e);
                 }
-
-                KeyguardManager kgm =
-                    (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
-                if (kgm != null) kgm.exitKeyguardSecurely(null);
             }
 
             try {

@@ -67,7 +67,6 @@ import com.android.systemui.R;
 import com.android.systemui.TransparencyManager;
 import com.android.systemui.statusbar.policy.KeyButtonView;
 import com.android.systemui.statusbar.policy.key.ExtensibleKeyButtonView;
-import com.android.systemui.statusbar.policy.key.RecentsKeyButtonView;
 
 public class NavigationBarView extends LinearLayout {
     final static boolean DEBUG = false;
@@ -171,7 +170,7 @@ public class NavigationBarView extends LinearLayout {
     public static final int KEY_BACK_ALT = 1000;
 
 
-
+    public int mSystemUiLayout = ExtendedPropertiesUtils.getActualProperty("com.android.systemui.layout");
     private int mMenuVisbility;
     private int mMenuLocation;
 
@@ -522,13 +521,8 @@ public class NavigationBarView extends LinearLayout {
             String iconUri) {
 
         final int iconSize = 80;
-        ExtensibleKeyButtonView v = null;
-        if(clickAction.equals(AwesomeConstant.ACTION_RECENTS)) {
-            v = new RecentsKeyButtonView(mContext, null, clickAction, longpress);
-        } else {
-            v = new ExtensibleKeyButtonView(mContext, null, clickAction,
-                longpress);
-        }
+        ExtensibleKeyButtonView v = new ExtensibleKeyButtonView(mContext, null,
+                clickAction, longpress);
         v.setLayoutParams(getLayoutParams(landscape, iconSize));
         v.setGlowBackground(landscape ? R.drawable.ic_sysbar_highlight_land
                 : R.drawable.ic_sysbar_highlight);
@@ -881,16 +875,16 @@ public class NavigationBarView extends LinearLayout {
     }
 
     public void reorient() {
-        final int rot = mDisplay.getRotation();
-        for (int i=0; i<4; i++) {
+        int rot = mDisplay.getRotation();
+        for (int i=0; i<3; i++) {
             mRotatedViews[i].setVisibility(View.GONE);
-        }
-        if (mCurrentUIMode !=0) { // this is either a tablet of Phablet.  Need to stay at Rot_0
-            mCurrentView = mRotatedViews[Surface.ROTATION_0];
-        } else {
-            mCurrentView = mRotatedViews[rot];
-        }
-        mCurrentView.setVisibility(View.VISIBLE);
+           }
+           if (mSystemUiLayout != 360) { // this is either a tablet of Phablet.  Need to stay at Rot_0
+               mCurrentView = mRotatedViews[Surface.ROTATION_0];
+           } else {
+               mCurrentView = mRotatedViews[rot];
+           }
+           mCurrentView.setVisibility(View.VISIBLE);
 
         // force the low profile & disabled states into compliance
         setLowProfile(mLowProfile, false, true /* force */);
