@@ -116,7 +116,7 @@ public class AOKPLogoActivity extends Activity {
                         .addCategory("com.android.internal.category.BFLOGO"));
                         //.setClassName("com.android.systemui","com.android.systemui.UnicornSack"));
                 } catch (ActivityNotFoundException ex) {
-                    android.util.Log.e("AOKPLogoActivity", "Couldn't find a Shamu.");
+                    android.util.Log.e("AOKPLogoActivity", "Couldn't find a print of a Sasquatch.");
                 }
                 finish();
                 return true;
