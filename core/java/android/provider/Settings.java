@@ -3568,6 +3568,35 @@ public final class Settings {
          *
          * @hide
          */
+        public static final String[] RIBBON_ICON_SPACE = new String[] {
+            "ribbon_icon_lockscreen_space",
+            "ribbon_icon_notification_space",
+            "ribbon_icon_swipe_space",
+            "ribbon_icon_quicksettings_space",
+        };
+
+        /**
+         *
+         * @hide
+         */
+        public static final String RIBBON_ICON_SPACE_VERTICAL = "ribbon_icon_space_vertical";
+
+        /**
+         * Ribbon Targets
+         *
+         * @hide
+         */
+        public static final String[] RIBBON_ICON_VIBRATE = new String[] {
+            "ribbon_icon_lockscreen_vibrate",
+            "ribbon_icon_notification_vibrate",
+            "ribbon_icon_swipe_vibrate",
+            "ribbon_icon_quicksettings_vibrate",
+        };
+
+        /**
+         *
+         * @hide
+         */
         public static final String RIBBON_HIDE_TIMEOUT = "ribbon_hide_timeout";
 
         /**
@@ -5962,6 +5991,8 @@ public final class Settings {
          * when charging wirelessly.
          */
         public static final String SCREENSAVER_ACTIVATE_ON_WIRELESS_CHARGE = "screensaver_activate_on_wireless_charger";
+
+        public static final String ENABLE_PERMISSIONS_MANAGEMENT = "enable_permissions_management";
 
         /**
          * This are the settings to be backed up.
