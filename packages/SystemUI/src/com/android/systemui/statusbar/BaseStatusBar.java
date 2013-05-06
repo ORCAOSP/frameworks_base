@@ -93,7 +93,9 @@ import com.android.systemui.recent.RecentsActivity;
 import com.android.systemui.recent.TaskDescription;
 import com.android.systemui.statusbar.phone.QuickSettingsContainerView;
 import com.android.systemui.statusbar.policy.BatteryController;
+import com.android.systemui.statusbar.policy.SbBatteryController;
 import com.android.systemui.statusbar.policy.Clock;
+import com.android.systemui.statusbar.policy.ClockCenter;
 import com.android.systemui.statusbar.policy.NetworkController;
 import com.android.systemui.statusbar.policy.NotificationRowLayout;
 import com.android.systemui.statusbar.tablet.StatusBarPanel;
@@ -166,8 +168,10 @@ public abstract class BaseStatusBar extends SystemUI implements
     // Policy
     public NetworkController mNetworkController;
     public BatteryController mBatteryController;
+    public SbBatteryController mSbBatteryController;
     public SignalClusterView mSignalCluster;
     public Clock mClock;
+    public ClockCenter mCClock;
 
     // left-hand icons 
     public LinearLayout mStatusIcons;
@@ -181,6 +185,8 @@ public abstract class BaseStatusBar extends SystemUI implements
     private TransitionDrawable mTransition;
     public ColorUtils.ColorSettingInfo mLastIconColor;
     public ColorUtils.ColorSettingInfo mLastBackgroundColor;
+    protected int mClockColor = com.android.internal.R.color.holo_blue_light;
+    public int mSystemUiLayout = ExtendedPropertiesUtils.getActualProperty("com.android.systemui.layout");
 
     // UI-specific methods
 
@@ -209,6 +215,10 @@ public abstract class BaseStatusBar extends SystemUI implements
     public QuickSettingsContainerView getQuickSettingsPanel() {
         // This method should be overriden
         return null;
+    }
+
+    public Handler getHandler() {
+        return mHandler;
     }
 
     public IStatusBarService getService() {
@@ -464,6 +474,9 @@ public abstract class BaseStatusBar extends SystemUI implements
             mNewCanvas.drawColor(0xFF000000);
             BitmapDrawable newBitmapDrawable = new BitmapDrawable(newBitmap);
 
+            TextSettingsObserver textObserver = new TextSettingsObserver(new Handler());
+            textObserver.observe();
+
             mTransition = new TransitionDrawable(new Drawable[]{currentBitmapDrawable, newBitmapDrawable});
             mBarView.setBackground(mTransition);
 
@@ -662,9 +675,16 @@ public abstract class BaseStatusBar extends SystemUI implements
         ColorUtils.ColorSettingInfo colorInfo = ColorUtils.getColorSettingInfo(mContext,
                 Settings.System.STATUS_ICON_COLOR);
         if (!colorInfo.lastColorString.equals(mLastIconColor.lastColorString)) {
-            if(mClock != null) mClock.setTextColor(colorInfo.lastColor);
+            if (colorInfo.isLastColorNull) {
+                TextSettingsObserver textObserver = new TextSettingsObserver(new Handler());
+                textObserver.observe();
+            } else {
+                if(mClock != null) mClock.setTextColor(colorInfo.lastColor);
+                if(mCClock != null) mCClock.setTextColor(colorInfo.lastColor);
+            }
             if(mSignalCluster != null) mSignalCluster.setColor(colorInfo);
-            //if(mBatteryController != null) mBatteryController.setColor(colorInfo);
+            if(mBatteryController != null) mBatteryController.setColor(colorInfo);
+            if(mSbBatteryController != null) mSbBatteryController.setColor(colorInfo);
             if (mStatusIcons != null) {
                 for(int i = 0; i < mStatusIcons.getChildCount(); i++) {
                     Drawable iconDrawable = ((ImageView)mStatusIcons.getChildAt(i)).getDrawable();
@@ -882,20 +902,18 @@ public abstract class BaseStatusBar extends SystemUI implements
 
         // Provide SearchPanel with a temporary parent to allow layout params to work.
         LinearLayout tmpRoot = new LinearLayout(mContext);
-        switch (mCurrentUIMode) {
-            case 0 :  // Phone Mode
-                mSearchPanelView = (SearchPanelView) LayoutInflater.from(mContext).inflate(
-                    R.layout.status_bar_search_panel, tmpRoot, false);
-                break;
-            case 1 : // Tablet Mode
-                mSearchPanelView = (SearchPanelView) LayoutInflater.from(mContext).inflate(
+
+        if (mSystemUiLayout >= 1000) {  // Device is Tablet 
+            mSearchPanelView = (SearchPanelView) LayoutInflater.from(mContext).inflate(
                     R.layout.status_bar_search_panel_tablet, tmpRoot, false);
-                break;
-            case 2 : // Phablet Mode
-                mSearchPanelView = (SearchPanelView) LayoutInflater.from(mContext).inflate(
+        } else if (mSystemUiLayout >= 600) {  // Device uses Phablet UI
+            mSearchPanelView = (SearchPanelView) LayoutInflater.from(mContext).inflate(
                     R.layout.status_bar_search_panel_phablet, tmpRoot, false);
-                break;    
+        } else {  // Device is Phone 
+            mSearchPanelView = (SearchPanelView) LayoutInflater.from(mContext).inflate(
+                    R.layout.status_bar_search_panel, tmpRoot, false);
         }
+
         mSearchPanelView.setOnTouchListener(
                  new TouchOutsideListener(MSG_CLOSE_SEARCH_PANEL, mSearchPanelView));
         mSearchPanelView.setVisibility(View.GONE);
@@ -1606,5 +1624,38 @@ public abstract class BaseStatusBar extends SystemUI implements
     public boolean inKeyguardRestrictedInputMode() {
         KeyguardManager km = (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
         return km.inKeyguardRestrictedInputMode();
+    }
+
+    private final class TextSettingsObserver extends ContentObserver {
+        TextSettingsObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            ContentResolver resolver = mContext.getContentResolver();
+            resolver.registerContentObserver(Settings.System
+                    .getUriFor(Settings.System.STATUSBAR_CLOCK_COLOR), false,
+                    this);
+            updateTextColor();
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            updateTextColor();
+        }
+    }
+
+    protected void updateTextColor() {
+        ContentResolver resolver = mContext.getContentResolver();
+        mClockColor = Settings.System.getInt(resolver,
+                Settings.System.STATUSBAR_CLOCK_COLOR,
+                0xFF33B5E5);
+
+        if (mClockColor == Integer.MIN_VALUE) {
+            // flag to reset the color
+            mClockColor = 0xFF33B5E5;
+        }
+        if(mClock != null) mClock.setTextColor(mClockColor);
+        if(mCClock != null) mCClock.setTextColor(mClockColor);
     }
 }
