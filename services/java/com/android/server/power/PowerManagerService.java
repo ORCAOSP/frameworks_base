@@ -186,6 +186,7 @@ public final class PowerManagerService extends IPowerManager.Stub
     private WirelessChargerDetector mWirelessChargerDetector;
     private SettingsObserver mSettingsObserver;
     private DreamManagerService mDreamManager;
+    private AutoBrightnessHandler mAutoBrightnessHandler;
     private LightsService.Light mAttentionLight;
     private LightsService.Light mButtonsLight;
 
@@ -425,6 +426,9 @@ public final class PowerManagerService extends IPowerManager.Stub
         // activity manager is not running when the constructor is called, so we
         // have to defer setting the screen state until this point.
         mDisplayBlanker.unblankAllDisplays();
+
+        mAutoBrightnessHandler = new AutoBrightnessHandler(context);
+
     }
 
     public void setPolicy(WindowManagerPolicy policy) {
@@ -591,9 +595,14 @@ public final class PowerManagerService extends IPowerManager.Stub
             mTemporaryScreenAutoBrightnessAdjustmentSettingOverride = Float.NaN;
         }
 
+        final int oldScreenBrightnessModeSetting =
+                mScreenBrightnessModeSetting;
         mScreenBrightnessModeSetting = Settings.System.getIntForUser(resolver,
                 Settings.System.SCREEN_BRIGHTNESS_MODE,
                 Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL, UserHandle.USER_CURRENT);
+        if (oldScreenBrightnessModeSetting != mScreenBrightnessModeSetting) {
+            mAutoBrightnessHandler.onAutoBrightnessChanged(mScreenBrightnessModeSetting);
+        }
 
         mDirty |= DIRTY_SETTINGS;
     }
@@ -1412,11 +1421,15 @@ public final class PowerManagerService extends IPowerManager.Stub
 
     private int getScreenOffTimeoutLocked() {
         int timeout = mScreenOffTimeoutSetting;
-        if (isMaximumScreenOffTimeoutFromDeviceAdminEnforcedLocked()) {
-            timeout = Math.min(timeout, mMaximumScreenOffTimeoutFromDeviceAdmin);
-        }
-        if (mUserActivityTimeoutOverrideFromWindowManager >= 0) {
-            timeout = (int)Math.min(timeout, mUserActivityTimeoutOverrideFromWindowManager);
+        if (timeout == mMaximumScreenOffTimeoutFromDeviceAdmin) {
+            /** Skip Math.min()'s to force MAX_VALUE for SCREEN_OFF_TIMEOUT */
+        } else {
+            if (isMaximumScreenOffTimeoutFromDeviceAdminEnforcedLocked()) {
+                timeout = Math.min(timeout, mMaximumScreenOffTimeoutFromDeviceAdmin);
+            }
+            if (mUserActivityTimeoutOverrideFromWindowManager >= 0) {
+                timeout = (int)Math.min(timeout, mUserActivityTimeoutOverrideFromWindowManager);
+            }
         }
         return Math.max(timeout, MINIMUM_SCREEN_OFF_TIMEOUT);
     }
