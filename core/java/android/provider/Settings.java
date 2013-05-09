@@ -2981,7 +2981,19 @@ public final class Settings {
          * @hide
          */
         public static final String STATUSBAR_HIDDEN = "statusbar_hidden";
-        
+
+        /**
+         * Whether or not hidden Statusbar can be pulled down
+         * @hide
+         */
+        public static final String HIDDEN_STATUSBAR_PULLDOWN = "hidden_statusbar_pulldown";
+
+        /**
+         * Allows hidden Statusbar timeout to be configured
+         * @hide
+         */
+        public static final String HIDDEN_STATUSBAR_PULLDOWN_TIMEOUT = "hidden_statusbar_pulldown_timeout";
+
         /**
          * Statusbar toggle for quick settings
          * @hide
@@ -3655,6 +3667,30 @@ public final class Settings {
          * @hide
          */
         public static final String RIBBON_DRAG_HANDLE_WEIGHT = "ribbon_drag_handle_weight";
+
+        /**
+         *
+         * @hide
+         */
+        public static final String APP_WINDOW_COLOR_BG = "app_window_color_bg";
+
+        /**
+         *
+         * @hide
+         */
+        public static final String APP_WINDOW_COLUMNS = "app_window_columns";
+
+        /**
+         *
+         * @hide
+         */
+        public static final String APP_WINDOW_COLOR_TEXT = "app_window_color_text";
+
+        /**
+         *
+         * @hide
+         */
+        public static final String APP_WINDOW_OPACITY = "app_window_opacity";
 
         /**
          *
