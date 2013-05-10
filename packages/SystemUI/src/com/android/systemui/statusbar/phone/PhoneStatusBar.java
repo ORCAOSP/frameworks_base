@@ -1363,13 +1363,17 @@ public class PhoneStatusBar extends BaseStatusBar {
     };
 
     private void updateStatusBarVisibility() {
-        if (statusbarHidden != 0) {
+        if (statusbarHidden != 1) {
             Settings.System.putInt(mContext.getContentResolver(),
                     Settings.System.STATUSBAR_HIDDEN,
                     (mNotificationData.size() == 0) ? 1 : 0);
         } else {
             Settings.System.putInt(mContext.getContentResolver(),
                     Settings.System.STATUSBAR_HIDDEN, 0);
+        }
+        if (statusbarHidden != 0) {
+            Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.STATUSBAR_HIDDEN, 1);
         }
     }
 
