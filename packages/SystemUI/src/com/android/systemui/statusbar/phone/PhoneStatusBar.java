@@ -404,6 +404,10 @@ public class PhoneStatusBar extends BaseStatusBar {
         mDreamManager = IDreamManager.Stub.asInterface(
                 ServiceManager.checkService(DreamService.DREAM_SERVICE));
 
+        mContext.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.AUTO_HIDE_STATUSBAR), true,
+                SettingsObserver);
+
         CustomTheme currentTheme = mContext.getResources().getConfiguration().customTheme;
         if (currentTheme != null) {
             mCurrentTheme = (CustomTheme)currentTheme.clone();
@@ -1348,9 +1352,18 @@ public class PhoneStatusBar extends BaseStatusBar {
         setAreThereNotifications();
     }
 
+    //0: Visible for notifications; 1: Always Hidden
+    int statusbarHidden = 0;
+    private ContentObserver SettingsObserver = new ContentObserver(new Handler()) {
+        @Override
+        public void onChange(boolean selfChange) {
+                        statusbarHidden = Settings.System.getInt(
+                    mContext.getContentResolver(), Settings.System.AUTO_HIDE_STATUSBAR, 0);
+        }
+    };
+
     private void updateStatusBarVisibility() {
-        if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.AUTO_HIDE_STATUSBAR, 0) == 1) {
+        if (statusbarHidden != 0) {
             Settings.System.putInt(mContext.getContentResolver(),
                     Settings.System.STATUSBAR_HIDDEN,
                     (mNotificationData.size() == 0) ? 1 : 0);
