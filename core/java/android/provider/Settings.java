@@ -2984,13 +2984,6 @@ public final class Settings {
         public static final String STATUSBAR_HIDDEN = "statusbar_hidden";
 
         /**
-         * Whether Status bar should be hiidden when there are no
-         * notifications
-         * @hide
-         */
-        public static final String AUTO_HIDE_STATUSBAR = "auto_hide_statusbar";
-
-        /**
          * Whether or not hidden Statusbar can be pulled down
          * @hide
          */
@@ -3014,7 +3007,7 @@ public final class Settings {
          */
         public static final String SCREENSHOT_TOGGLE_DELAY = "screenshot_toggle_delay";
 
-    	  /**
+          /**
          * Show the NavBar dialog in Power menu
          * @hide
          */
