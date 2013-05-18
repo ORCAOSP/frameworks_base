@@ -229,7 +229,7 @@
     <!--  AOKP Strings can go here... -->
 
     <!--  Target/Action Strings -->
-    <string name="shortcut_label">AOKPアクション</string>
+    <string name="shortcut_label">Bigfoot Actions</string>
     <string name="action_home">ホーム</string>
     <string name="action_back">戻る</string>
     <string name="action_recents">アプリ履歴</string>

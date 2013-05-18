@@ -224,7 +224,7 @@
     <!--  AOKP 文本 -->
 
     <!-- Target/Action Strings -->
-    <string name="shortcut_label">AOKP动作</string>
+    <string name="shortcut_label">Bigfoot Actions</string>
     <string name="action_home">主屏幕</string>
     <string name="action_back">返回</string>
     <string name="action_recents">近期任务</string>

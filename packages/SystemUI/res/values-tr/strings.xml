@@ -205,7 +205,7 @@
     <string name="quick_settings_swaggersun">Swagger Sunday</string>
     <string name="quick_settings_fbgt">FBGT</string>
     <string name="quick_settings_powermenu">Güç Menüsü</string>
-    <string name="quick_settings_rootbox">RootBox</string>
+    <string name="quick_settings_orcatools">Orca Tools</string>
     <string name="quick_settings_profile">Profil</string>    
     <string name="quick_settings_recording">Kaydediliyor...</string>
     <string name="quick_settings_recordingcap">Kayıt Alındı</string>
@@ -218,7 +218,7 @@
     <string name="quick_settings_reboot_message">Cihazınız yeniden başlatılıyor</string>
     <string name="status_bar_help_title" msgid="1199237744086469217">"Bildirimler burada görünür"</string>
     <string name="status_bar_help_text" msgid="7874607155052076323">"Aşağıya hızlıca kaydırarak bunlara istediğiniz zaman erişebilirsiniz."\n"Sistem denetimleri için tekrar hızlıca aşağı kaydırın."</string>
-    <string name="shortcut_label">AOKP Eylemleri</string>
+    <string name="shortcut_label">Bigfoot Actions</string>
     <string name="action_home">AnaSayfa</string>
     <string name="action_back">Geri</string>
     <string name="action_recents">Açık Uyg.lar</string>
@@ -276,8 +276,8 @@
     <string name="quick_settings_quiet_hours_off_label">Sessiz Saatler kapalı</string>
     <string name="quick_settings_pie_on_label">Gizli tuşlar açık</string>
     <string name="quick_settings_pie_off_label">Gizli tuşlar kapalı</string>
-    <string name="quick_settings_rb_dark_on_label">Koyu RB açık</string>
-    <string name="quick_settings_rb_dark_off_label">Koyu RB kapalı</string>
+    <string name="quick_settings_bf_dark_on_label">Koyu BF açık</string>
+    <string name="quick_settings_bf_dark_off_label">Koyu BF kapalı</string>
     <string name="quick_settings_swaggersuntoast">#SwaggerSunday</string>
     <string name="quick_settings_screenshot">Ekran Görüntüsü</string>
     <string name="memory">RAM</string>

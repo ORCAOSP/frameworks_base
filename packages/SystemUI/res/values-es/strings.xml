@@ -257,9 +257,9 @@
     <string name="toggle_QUICKRECORD">Grabación rápida</string>
     <string name="toggle_STATUSBAR">Ocultar barra de estado</string>
     <string name="toggle_QUIETHOURS">Horas de silencio</string>
-    <string name="toggle_ROOTBOX">RootBox</string>
+    <string name="toggle_ORCATOOLS">Orca Tools</string>
     <string name="toggle_SLEEP">Apagar pantalla</string>
     <string name="toggle_PIE">Controles circulares</string>
-    <string name="toggle_DARK">Dark RB</string>
+    <string name="toggle_DARK">Dark BF</string>
     <string name="toggle_CUSTOM">Personalizado</string>
 </resources>
