@@ -3020,7 +3020,7 @@ public final class Settings {
          */
         public static final String SCREENSHOT_TOGGLE_DELAY = "screenshot_toggle_delay";
 
-    	  /**
+          /**
          * Show the NavBar dialog in Power menu
          * @hide
          */
@@ -3902,6 +3902,12 @@ public final class Settings {
          * @hide
          */
         public static final String MVNO_ROAMING = "mvno_roaming";
+
+        /**
+         * Forces formal text input.  1 to replace emoticon key with enter key.
+         * @hide
+         */
+        public static final String FORMAL_TEXT_INPUT = "formal_text_input";
 
         /**
          * Whether to enable custom rebindings of the actions performed on
