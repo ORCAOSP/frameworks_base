@@ -1070,7 +1070,10 @@ public class Preference implements Comparable<Preference>, OnDependencyChangeLis
         if (mOrder != DEFAULT_ORDER
                 || (mOrder == DEFAULT_ORDER && another.mOrder != DEFAULT_ORDER)) {
             // Do order comparison
-            return mOrder - another.mOrder; 
+            return mOrder - another.mOrder;
+        } else if (mTitle == another.mTitle) {
+            // If titles are null or share same object comparison
+            return 0;             
         } else if (mTitle == null) {
             return 1;
         } else if (another.mTitle == null) {
