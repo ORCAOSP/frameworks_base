@@ -4292,20 +4292,6 @@ public final class Settings {
         public static final String MISSED_CALL_BREATH = "missed_call_breath";
 
         /**
-        * holo dark/light theme description in quick settings
-        *
-        *@hide
-        */
-        public static final String QUICK_THEME_STYLE = "quick_theme_style";
-
-        /**
-         * text color for quick settings
-         *
-         * @hide
-         */
-        public static final String QUICK_TEXT_COLOR = "quick_text_color";
-
-        /**
          * Settings to backup. This is here so that it's in the same place as the settings
          * keys and easy to update.
          *
