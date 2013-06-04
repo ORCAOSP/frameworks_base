@@ -948,15 +948,7 @@ public final class BluetoothAdapter {
      */
     public BluetoothServerSocket listenUsingRfcommWithServiceRecord(String name, UUID uuid)
             throws IOException {
-        return createNewRfcommSocketAndRecord(name, -1, uuid, true, true);
-    }
-
-    /**
-     * @hide
-     */
-    public BluetoothServerSocket listenUsingRfcommWithServiceRecordOn(String name, int port, UUID uuid)
-            throws IOException {
-        return createNewRfcommSocketAndRecord(name, port, uuid, true, true);
+        return createNewRfcommSocketAndRecord(name, uuid, true, true);
     }
 
     /**
@@ -987,7 +979,7 @@ public final class BluetoothAdapter {
      */
     public BluetoothServerSocket listenUsingInsecureRfcommWithServiceRecord(String name, UUID uuid)
             throws IOException {
-        return createNewRfcommSocketAndRecord(name, -1, uuid, false, false);
+        return createNewRfcommSocketAndRecord(name, uuid, false, false);
     }
 
      /**
@@ -1025,15 +1017,15 @@ public final class BluetoothAdapter {
      */
     public BluetoothServerSocket listenUsingEncryptedRfcommWithServiceRecord(
             String name, UUID uuid) throws IOException {
-        return createNewRfcommSocketAndRecord(name, -1, uuid, false, true);
+        return createNewRfcommSocketAndRecord(name, uuid, false, true);
     }
 
 
-    private BluetoothServerSocket createNewRfcommSocketAndRecord(String name, int port, UUID uuid,
+    private BluetoothServerSocket createNewRfcommSocketAndRecord(String name, UUID uuid,
             boolean auth, boolean encrypt) throws IOException {
         BluetoothServerSocket socket;
         socket = new BluetoothServerSocket(BluetoothSocket.TYPE_RFCOMM, auth,
-                        encrypt, port, new ParcelUuid(uuid));
+                        encrypt, new ParcelUuid(uuid));
         socket.setServiceName(name);
         int errno = socket.mSocket.bindListen();
         if (errno != 0) {
