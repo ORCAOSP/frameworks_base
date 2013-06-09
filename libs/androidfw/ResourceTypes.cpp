@@ -1963,7 +1963,11 @@ bool ResTable_config::match(const ResTable_config& settings) const {
         if (screenLong != 0 && screenLong != setScreenLong) {
             return false;
         }
-
+    }
+    if (uiInvertedMode != 0 && uiInvertedMode != settings.uiInvertedMode) {
+        return false;
+    }
+    if (screenConfig != 0) {
         const int uiModeType = uiMode&MASK_UI_MODE_TYPE;
         const int setUiModeType = settings.uiMode&MASK_UI_MODE_TYPE;
         if (uiModeType != 0 && uiModeType != setUiModeType) {
@@ -2156,6 +2160,20 @@ String8 ResTable_config::toString() const {
                 break;
         }
     }
+    if (uiInvertedMode != UI_INVERTED_MODE_ANY) {
+        if (res.size() > 0) res.append("-");
+        switch (uiInvertedMode) {
+            case ResTable_config::UI_INVERTED_MODE_YES:
+                res.append("inverted");
+                break;
+            case ResTable_config::UI_INVERTED_MODE_NO:
+                res.append("notinverted");
+                break;
+            default:
+                res.appendFormat("uiInvertedMode=%d", dtohs(uiInvertedMode));
+                break;
+        }
+    }
     if ((uiMode&MASK_UI_MODE_TYPE) != UI_MODE_TYPE_ANY) {
         if (res.size() > 0) res.append("-");
         switch (uiMode&ResTable_config::MASK_UI_MODE_TYPE) {
@@ -2170,9 +2188,6 @@ String8 ResTable_config::toString() const {
                 break;
             case ResTable_config::UI_MODE_TYPE_APPLIANCE:
                 res.append("appliance");
-                break;
-            case ResTable_config::UI_MODE_TYPE_INVERTED:
-                res.append("inverted");
                 break;
             default:
                 res.appendFormat("uiModeType=%d",
