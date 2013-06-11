@@ -1963,7 +1963,11 @@ bool ResTable_config::match(const ResTable_config& settings) const {
         if (screenLong != 0 && screenLong != setScreenLong) {
             return false;
         }
-
+    }
+    if (uiInvertedMode != 0 && uiInvertedMode != settings.uiInvertedMode) {
+        return false;
+    }
+    if (screenConfig != 0) {
         const int uiModeType = uiMode&MASK_UI_MODE_TYPE;
         const int setUiModeType = settings.uiMode&MASK_UI_MODE_TYPE;
         if (uiModeType != 0 && uiModeType != setUiModeType) {
@@ -2153,6 +2157,20 @@ String8 ResTable_config::toString() const {
                 break;
             default:
                 res.appendFormat("orientation=%d", dtohs(orientation));
+                break;
+        }
+    }
+    if (uiInvertedMode != UI_INVERTED_MODE_ANY) {
+        if (res.size() > 0) res.append("-");
+        switch (uiInvertedMode) {
+            case ResTable_config::UI_INVERTED_MODE_YES:
+                res.append("inverted");
+                break;
+            case ResTable_config::UI_INVERTED_MODE_NO:
+                res.append("notinverted");
+                break;
+            default:
+                res.appendFormat("uiInvertedMode=%d", dtohs(uiInvertedMode));
                 break;
         }
     }
