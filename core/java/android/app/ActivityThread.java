@@ -1801,7 +1801,8 @@ public final class ActivityThread {
         }
         PackageInfo pi = null;
         try {
-            pi = getPackageManager().getPackageInfo(theme.getThemePackageName(), 0, 0);
+            pi = getPackageManager().getPackageInfo(theme.getThemePackageName(),
+                    0, UserHandle.myUserId());
         } catch (RemoteException e) {
         }
         if (pi != null && pi.applicationInfo != null && pi.themeInfos != null) {
@@ -2871,7 +2872,12 @@ public final class ActivityThread {
                 r.stopped = false;
                 r.state = null;
             } catch (Exception e) {
-                // Unable to resume activity
+                if (!mInstrumentation.onException(r.activity, e)) {
+                    throw new RuntimeException(
+                        "Unable to resume activity "
+                        + r.intent.getComponent().toShortString()
+                        + ": " + e.toString(), e);
+                }
             }
         }
         return r;
