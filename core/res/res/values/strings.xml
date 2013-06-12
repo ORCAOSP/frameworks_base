@@ -3510,8 +3510,6 @@
     <!-- Dialog title for user to select a different wallpaper from service list -->
     <string name="chooser_wallpaper">Change wallpaper</string>
 
-    <string name="default_wallpaper_component">@null</string>
-
     <!-- Do Not Translate: Alternate eri.xml -->
     <string name="alternate_eri_file">/data/eri.xml</string>
 
