@@ -434,6 +434,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+    // Behavior of home wake
+    boolean mHomeWakeScreen;
+
     // HW overlays state
     int mDisableOverlays = 0;
 
@@ -679,6 +682,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.Secure.getUriFor(
                     Settings.Secure.RING_HOME_BUTTON_BEHAVIOR), false, this,
+                    UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HOME_WAKE_SCREEN), false, this,
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.ACCELEROMETER_ROTATION), false, this,
@@ -1497,6 +1503,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     UserHandle.USER_CURRENT);
             mHasNavigationBar = Settings.System.getInt(mContext.getContentResolver(), 
                     Settings.System.EXPANDED_DESKTOP_STATE, 0) != 1 && !mHasSystemNavBar;
+            mHomeWakeScreen = (Settings.System.getIntForUser(resolver,
+                    Settings.System.HOME_WAKE_SCREEN, 1, UserHandle.USER_CURRENT) == 1);
 
             getDimensions();
 
@@ -4202,6 +4210,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         // Handle special keys.
         switch (keyCode) {
+            case KeyEvent.KEYCODE_HOME:
+                if (down && !isScreenOn && mHomeWakeScreen) {
+                    if (keyguardActive) {
+                        // If the keyguard is showing, let it wake the device when ready.
+                        mKeyguardMediator.onWakeKeyWhenKeyguardShowingTq(keyCode);
+                    } else {
+                        // Otherwise, wake the device ourselves.
+                        result |= ACTION_WAKE_UP;
+                    }
+                }
+                break;
             case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_VOLUME_UP:
             case KeyEvent.KEYCODE_VOLUME_MUTE: {
@@ -4469,6 +4488,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             case KeyEvent.KEYCODE_MEDIA_RECORD:
             case KeyEvent.KEYCODE_MEDIA_FAST_FORWARD:
             case KeyEvent.KEYCODE_CAMERA:
+                return false;
+
+            // home wake can be configurable so default to no here
+            case KeyEvent.KEYCODE_HOME:
                 return false;
         }
         return true;
