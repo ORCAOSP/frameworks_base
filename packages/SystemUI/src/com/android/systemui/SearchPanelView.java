@@ -231,15 +231,10 @@ public class SearchPanelView extends FrameLayout implements
 
        final Runnable SetLongPress = new Runnable () {
             public void run() {
-                if (!mSearchPanelLock) {
-                    mSearchPanelLock = true;
+                if (!mLongPress) {
+                    vibrate();
                     mLongPress = true;
-                    if (shouldUnlock(longList.get(mTarget))) {
-                        maybeSkipKeyguard();
-                    }
-                    AwesomeAction.launchAction(mContext, longList.get(mTarget));
-                    mBar.hideSearchPanel();
-                 }
+                }
             }
         };
 
@@ -261,6 +256,14 @@ public class SearchPanelView extends FrameLayout implements
 
         public void onReleased(View v, int handle) {
             fireTorch();
+            if (!mSearchPanelLock && mLongPress) {
+                mSearchPanelLock = true;
+                if (shouldUnlock(longList.get(mTarget))) {
+                    maybeSkipKeyguard();
+                }
+                AwesomeAction.launchAction(mContext, longList.get(mTarget));
+                mBar.hideSearchPanel();
+            }
         }
 
         public void onTargetChange(View v, final int target) {
@@ -333,8 +336,6 @@ public class SearchPanelView extends FrameLayout implements
         if (action.equals(AwesomeConstant.ACTION_SILENT_VIB.value()) ||
             action.equals(AwesomeConstant.ACTION_VIB.value()) ||
             action.equals(AwesomeConstant.ACTION_POWER.value()) ||
-            action.equals(AwesomeConstant.ACTION_TORCH.value()) ||
-            action.equals(AwesomeConstant.ACTION_NOTIFICATIONS.value()) ||
             action.equals(AwesomeConstant.ACTION_SILENT.value())) {
             return false;
         }
