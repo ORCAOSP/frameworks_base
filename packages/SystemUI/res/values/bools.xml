@@ -2,5 +2,4 @@
 <resources>
     <!--  Can be used to default to Alt-Signal_layout -->
     <bool name="statusbar_alt_signal_layout">false</bool>
-    
 </resources>

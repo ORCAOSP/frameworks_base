@@ -68,14 +68,13 @@
 
         </com.android.systemui.recent.RecentsVerticalScrollView>
 
-    <ImageView android:id="@+id/recents_kill_all_button"
+    <Button android:id="@+id/recents_kill_all_button"
             android:layout_gravity="bottom|left"
-            android:layout_marginTop="50dp"
-            android:layout_marginRight="50dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginRight="5dp"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
-            android:scaleType="center"
-            android:src="@drawable/ic_recents_clear" />
+            android:text="@string/recents_kill_all_button_text"/>
 
     <view class="com.android.systemui.recent.LinearColorBar"
             android:id="@+id/ram_usage_bar"
