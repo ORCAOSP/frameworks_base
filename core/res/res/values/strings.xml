@@ -4163,7 +4163,7 @@
     <string name="action_null">Blank</string>
     <string name="action_widgets">Nav Widgets</string>
     <string name="action_app_window">App Window</string>
-    <string name="action_ribbon">Bigfoot Ribbon</string>
+    <string name="action_ribbon">Orca Ribbon</string>
     <string name="action_app">Custom App/Shortcut</string>
 
     <!-- Options that show upon long-pressing a key on the physical keyboard -->
