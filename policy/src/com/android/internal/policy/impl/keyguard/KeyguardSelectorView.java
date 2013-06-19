@@ -57,11 +57,9 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import static com.android.internal.util.aokp.AwesomeConstants.*;
-import com.android.internal.telephony.IccCardConstants.State;
 import com.android.internal.util.aokp.AokpRibbonHelper;
-import com.android.internal.util.aokp.GlowPadTorchHelper2;
 import com.android.internal.util.aokp.LockScreenHelpers;
-import com.android.internal.view.RotationPolicy;
+import com.android.internal.telephony.IccCardConstants.State;
 import com.android.internal.widget.LockPatternUtils;
 import com.android.internal.widget.multiwaveview.GlowPadView;
 import com.android.internal.widget.multiwaveview.GlowPadView.OnTriggerListener;
@@ -73,6 +71,9 @@ import java.util.ArrayList;
 public class KeyguardSelectorView extends LinearLayout implements KeyguardSecurityView {
     private static final boolean DEBUG = KeyguardHostView.DEBUG;
     private static final String TAG = "SecuritySelectorView";
+
+    private final int TORCH_TIMEOUT = ViewConfiguration.getLongPressTimeout(); //longpress glowpad torch
+    private final int TORCH_CHECK = 2000; //make sure torch turned off
 
     private KeyguardSecurityCallback mCallback;
     private GlowPadView mGlowPadView;
@@ -86,8 +87,7 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
     private Drawable mBouncerFrame;
     private Resources res;
 
-    private int mGlowTorch;
-    private boolean mUserRotation;
+    private boolean mGlowTorch;
     private boolean mGlowTorchOn;
     private boolean mGlowPadLock;
     private boolean mBoolLongPress;
@@ -151,7 +151,7 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
        final Runnable SetLongPress = new Runnable () {
             public void run() {
                 if (!mLongPress) {
-                    GlowPadTorchHelper.vibrate(mContext);
+                    vibrate();
                     mLongPress = true;
                 }
             }
@@ -191,9 +191,9 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
         public void onGrabbed(View v, int handle) {
             mCallback.userActivity(0);
             doTransition(mFadeView, 0.0f);
-            if (mGlowTorch == 1) {
+            if (mGlowTorch) {
                 mHandler.removeCallbacks(checkTorch);
-                mHandler.postDelayed(startTorch, GlowPadTorchHelper.TORCH_TIMEOUT);
+                mHandler.postDelayed(startTorch, TORCH_TIMEOUT);
             }
         }
 
@@ -295,8 +295,8 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
                 Settings.System.RIBBON_ICON_COLORIZE[AokpRibbonHelper.LOCKSCREEN], true), 0));
         updateTargets();
 
-        mGlowTorch = Settings.System.getInt(cr,
-                Settings.System.LOCKSCREEN_GLOW_TORCH, 0);
+        mGlowTorch = Settings.System.getBoolean(cr,
+                Settings.System.LOCKSCREEN_GLOW_TORCH, false);
         mGlowTorchOn = false;
 
         mSecurityMessageDisplay = new KeyguardMessageArea.Helper(this);
@@ -331,28 +331,52 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
 
     private void fireTorch() {
         mHandler.removeCallbacks(startTorch);
-        if (mGlowTorch == 1 && mGlowTorchOn) {
+        if (mGlowTorch && mGlowTorchOn) {
             mGlowTorchOn = false;
-            GlowPadTorchHelper.killTorch(mContext);
-            RotationPolicy.setRotationLock(mContext, mUserRotation);
-            mHandler.postDelayed(checkTorch, GlowPadTorchHelper.TORCH_CHECK);
+            vibrate();
+            torchOff();
+            mHandler.postDelayed(checkTorch, TORCH_CHECK);
         }
     }
 
-    final Runnable startTorch = new Runnable () {
+    private void torchOff() {
+        Intent intent = new Intent("net.cactii.flash2.TOGGLE_FLASHLIGHT");
+        intent.putExtra("bright", false);
+        mContext.sendBroadcast(intent);
+    }
+
+    private void vibrate() {
+        if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.HAPTIC_FEEDBACK_ENABLED, 1, UserHandle.USER_CURRENT) != 0) {
+            android.os.Vibrator vib = (android.os.Vibrator)mContext.getSystemService(
+                    Context.VIBRATOR_SERVICE);
+            if (vib != null) {
+                vib.vibrate(25);
+            }
+        }
+    }
+
+    final Runnable checkTorch = new Runnable () {
         public void run() {
-            if (!mGlowTorchOn) {
-                mUserRotation = RotationPolicy.isRotationLocked(mContext);
-                RotationPolicy.setRotationLock(mContext, true);
-                mGlowTorchOn = GlowPadTorchHelper.startTorch(mContext);
+            boolean torchActive = Settings.System.getBoolean(mContext.getContentResolver(),
+                    Settings.System.TORCH_STATE, false);
+            if (torchActive) {
+                Log.w(TAG, "Second Torch Temination Required");
+                torchOff();
             }
         }
     };
 
-    final Runnable checkTorch = new Runnable () {
+    final Runnable startTorch = new Runnable () {
         public void run() {
-            if (GlowPadTorchHelper.torchActive(mContext)) {
-                GlowPadTorchHelper.torchOff(mContext, true);
+            boolean torchActive = Settings.System.getBoolean(mContext.getContentResolver(),
+                    Settings.System.TORCH_STATE, false);
+            if (!torchActive && !mGlowTorchOn) {
+                mGlowTorchOn = true;
+                vibrate();
+                Intent intent = new Intent("net.cactii.flash2.TOGGLE_FLASHLIGHT");
+                intent.putExtra("bright", false);
+                mContext.sendBroadcast(intent);
             }
         }
     };
