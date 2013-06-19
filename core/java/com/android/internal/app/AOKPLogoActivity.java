@@ -66,7 +66,7 @@ public class AOKPLogoActivity extends Activity {
         tv.setTextSize(1.25f*size);
         tv.setTextColor(0xFFFFFFFF);
         tv.setShadowLayer(4*metrics.density, 0, 2*metrics.density, 0x66000000);
-        tv.setText("ORCA BIGFOOT 2");
+        tv.setText("ORCA 2.2");
         view.addView(tv, lp);
 
         tv = new TextView(this);
@@ -91,7 +91,7 @@ public class AOKPLogoActivity extends Activity {
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
         mContent = new ImageView(this);
-        mContent.setImageResource(com.android.internal.R.drawable.bflogo_alt);
+        mContent.setImageResource(com.android.internal.R.drawable.oclogo_alt);
         mContent.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
 
         final int p = (int)(32 * metrics.density);
@@ -101,7 +101,7 @@ public class AOKPLogoActivity extends Activity {
             @Override
             public void onClick(View v) {
                 mToast.show();
-                mContent.setImageResource(com.android.internal.R.drawable.bflogo);
+                mContent.setImageResource(com.android.internal.R.drawable.oclogo);
             }
         });
 
@@ -113,10 +113,10 @@ public class AOKPLogoActivity extends Activity {
                         .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                             | Intent.FLAG_ACTIVITY_CLEAR_TASK
                             | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-                        .addCategory("com.android.internal.category.BFLOGO"));
+                        .addCategory("com.android.internal.category.OCLOGO"));
                         //.setClassName("com.android.systemui","com.android.systemui.UnicornSack"));
                 } catch (ActivityNotFoundException ex) {
-                    android.util.Log.e("AOKPLogoActivity", "Couldn't find a print of a Sasquatch.");
+                    android.util.Log.e("AOKPLogoActivity", "Couldn't swim with the killer whale.");
                 }
                 finish();
                 return true;
