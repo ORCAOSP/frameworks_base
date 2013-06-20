@@ -102,7 +102,6 @@ public class PieMenu extends FrameLayout {
     private static int ANIMATOR_SNAP_GROW = ANIMATOR_ACC_INC_15 + 2;
     private static int ANIMATOR_END = ANIMATOR_SNAP_GROW;
 
-    private static final int COLOR_OUTLINES_MASK = 0x22000000;
     private static final int COLOR_ALPHA_MASK = 0xaa000000;
     private static final int COLOR_OPAQUE_MASK = 0xff000000;
     private static final int COLOR_SNAP_BACKGROUND = 0xffffffff;
@@ -225,6 +224,8 @@ public class PieMenu extends FrameLayout {
     private boolean mUseMenuAlways;
     private boolean mUseSearch;
     private boolean mUseLastApp;
+    private boolean mUseKillTask;
+    private boolean mUseAppWindow;
     private boolean mHapticFeedback;
 
     // Animations
@@ -284,6 +285,8 @@ public class PieMenu extends FrameLayout {
         mUseMenuAlways = Settings.System.getInt(mContext.getContentResolver(), Settings.System.PIE_MENU, 1) == 1;
         mUseSearch = Settings.System.getInt(mContext.getContentResolver(), Settings.System.PIE_SEARCH, 1) == 1;
         mUseLastApp = Settings.System.getInt(mContext.getContentResolver(), Settings.System.PIE_LAST_APP, 0) == 1;
+        mUseKillTask = Settings.System.getInt(mContext.getContentResolver(), Settings.System.PIE_KILL_TASK, 0) == 1;
+        mUseAppWindow = Settings.System.getInt(mContext.getContentResolver(), Settings.System.PIE_APP_WINDOW, 0) == 1;
         mNavbarZero = Integer.parseInt(ExtendedPropertiesUtils.getProperty(
                 "com.android.systemui.navbar.dpi", "100")) == 0 && !expanded;
         mStatusMode = Settings.System.getInt(mContext.getContentResolver(),
@@ -384,7 +387,7 @@ public class PieMenu extends FrameLayout {
         if (ColorUtils.getPerAppColorState(mContext)) {
             ColorUtils.ColorSettingInfo colorInfo;
             colorInfo = ColorUtils.getColorSettingInfo(mContext, Settings.System.NAV_BAR_COLOR);
-            mPieOutlines.setColor(ColorUtils.extractRGB(colorInfo.lastColor) | COLOR_OUTLINES_MASK);           
+            mPieBackground.setColor(ColorUtils.extractRGB(colorInfo.lastColor) | COLOR_ALPHA_MASK);
 
             colorInfo = ColorUtils.getColorSettingInfo(mContext, Settings.System.NAV_GLOW_COLOR);
             mPieSelected.setColor(ColorUtils.extractRGB(colorInfo.lastColor) | COLOR_ALPHA_MASK);
@@ -393,10 +396,10 @@ public class PieMenu extends FrameLayout {
             mClockPaint.setColor(colorInfo.lastColor);
             mAmPmPaint.setColor(colorInfo.lastColor);
             mClockPaint.setColor(colorInfo.lastColor);
-            mPieBackground.setColor(ColorUtils.extractRGB(colorInfo.lastColor) | COLOR_ALPHA_MASK);
 
             mChevronBackgroundLeft.setColor(ColorUtils.extractRGB(buttonColorInfo.lastColor) | COLOR_OPAQUE_MASK);
-            mChevronBackgroundRight.setColor(ColorUtils.extractRGB(buttonColorInfo.lastColor) | COLOR_OPAQUE_MASK);            
+            mChevronBackgroundRight.setColor(ColorUtils.extractRGB(buttonColorInfo.lastColor) | COLOR_OPAQUE_MASK);
+            mPieOutlines.setColor(ColorUtils.extractRGB(buttonColorInfo.lastColor) | COLOR_ALPHA_MASK);
             mBatteryJuice.setColorFilter(buttonColorInfo.isLastColorNull ? null :
                     new PorterDuffColorFilter(ColorUtils.extractRGB(buttonColorInfo.lastColor) | COLOR_OPAQUE_MASK, Mode.SRC_ATOP));
 
@@ -640,7 +643,8 @@ public class PieMenu extends FrameLayout {
 
     private boolean canItemDisplay(PieItem item) {
         return !(item.getName().equals(PieControl.MENU_BUTTON) && !mPanel.currentAppUsesMenu() && !mUseMenuAlways) &&
-                !(item.getName().equals(PieControl.SEARCH_BUTTON) && !mUseSearch) && !(item.getName().equals(PieControl.LAST_APP_BUTTON) && !mUseLastApp);
+                !(item.getName().equals(PieControl.SEARCH_BUTTON) && !mUseSearch) && !(item.getName().equals(PieControl.LAST_APP_BUTTON) && !mUseLastApp) &&
+                !(item.getName().equals(PieControl.APP_WINDOW_BUTTON) && !mUseAppWindow) && !(item.getName().equals(PieControl.KILL_TASK_BUTTON) && !mUseKillTask);
     }
 
     private void layoutPie() {
@@ -652,6 +656,8 @@ public class PieMenu extends FrameLayout {
         if (!mPanel.currentAppUsesMenu() && !mUseMenuAlways) itemCount--;
         if (!mUseSearch) itemCount--;
         if (!mUseLastApp) itemCount--;
+        if (!mUseAppWindow) itemCount--;
+        if (!mUseKillTask) itemCount--;
 
         int totalCount = 0;
         int lesserSweepCount = 0;
