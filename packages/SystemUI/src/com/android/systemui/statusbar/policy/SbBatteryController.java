@@ -38,14 +38,12 @@ import android.os.Handler;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.ColorUtils;
-import android.util.Slog;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import com.android.internal.util.aokp.StatusBarHelpers;
+
 import com.android.systemui.R;
 
 public class SbBatteryController extends LinearLayout {
@@ -76,8 +74,7 @@ public class SbBatteryController extends LinearLayout {
 
     private int mLevel = -1;
     private boolean mPlugged = false;
-    private int mStockFontSize;
-    private int mFontSize;
+    private boolean mStatusPac;
 
     public static final int STYLE_ICON_ONLY = 0;
     public static final int STYLE_TEXT_ONLY = 1;
@@ -86,7 +83,12 @@ public class SbBatteryController extends LinearLayout {
     public static final int STYLE_ICON_CIRCLE_RB = 4;
     public static final int STYLE_ICON_SQUARE_RB = 5;
     public static final int STYLE_ICON_SPEED_RB = 6;
-    public static final int STYLE_HIDE = 7;
+    public static final int STYLE_ICON_RACING_RB = 7;
+    public static final int STYLE_ICON_GAUGE_RB = 8;
+    public static final int STYLE_ICON_PLANET_RB = 9;
+    public static final int STYLE_ICON_SLIDER_RB = 10;
+    public static final int STYLE_ICON_BRICK_RB = 11;
+    public static final int STYLE_HIDE = 12;
 
     public SbBatteryController(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -108,7 +110,6 @@ public class SbBatteryController extends LinearLayout {
         mBatteryTextOnly_Plugged = (TextView) findViewById(R.id.battery_text_only_plugged);
         addIconView(mBatteryIcon);
 
-        mStockFontSize = StatusBarHelpers.pixelsToSp(mContext,mBatteryTextOnly.getTextSize());
         SettingsObserver settingsObserver = new SettingsObserver(new Handler());
         settingsObserver.observe();
         updateSettings(); // to initialize values
@@ -176,9 +177,10 @@ public class SbBatteryController extends LinearLayout {
     private void setBatteryIcon(int level, boolean plugged) {
         mLevel = level;
         mPlugged = plugged;
-        ContentResolver cr = mContext.getContentResolver();
-        mBatteryStyle = Settings.System.getInt(cr,
+        mBatteryStyle = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.STATUSBAR_BATTERY_ICON, 0);
+        mStatusPac = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.PAC_STATUS, 0) == 1;
         int icon;
         switch (mBatteryStyle) {
             case STYLE_ICON_CIRCLE_RB:
@@ -193,6 +195,26 @@ public class SbBatteryController extends LinearLayout {
                  icon = plugged ? R.drawable.stat_sys_battery_charge_altcircle
                  : R.drawable.stat_sys_battery_altcircle;
                  break;
+            case STYLE_ICON_RACING_RB:
+                 icon = plugged ? R.drawable.stat_sys_battery_charge_racing
+                 : R.drawable.stat_sys_battery_racing;
+                 break;
+            case STYLE_ICON_GAUGE_RB:
+                 icon = plugged ? R.drawable.stat_sys_battery_charge_gauge
+                 : R.drawable.stat_sys_battery_gauge;
+                 break;
+            case STYLE_ICON_PLANET_RB:
+                 icon = plugged ? R.drawable.stat_sys_battery_charge_planet
+                 : R.drawable.stat_sys_battery_planet;
+                 break;
+            case STYLE_ICON_SLIDER_RB:
+                 icon = plugged ? R.drawable.stat_sys_battery_charge_slider
+                 : R.drawable.stat_sys_battery_slider;
+                 break;
+            case STYLE_ICON_BRICK_RB:
+                 icon = plugged ? R.drawable.stat_sys_battery_charge_brick
+                 : R.drawable.stat_sys_battery_brick;
+                 break;
             default:
                  icon = plugged ? R.drawable.stat_sys_battery_charge
                  : R.drawable.stat_sys_battery;
@@ -202,11 +224,13 @@ public class SbBatteryController extends LinearLayout {
         for (int i = 0; i < N; i++) {
             ImageView v = mIconViews.get(i);
             Drawable batteryBitmap = mContext.getResources().getDrawable(icon);
+         if (mStatusPac) {
             if (mColorInfo.isLastColorNull) {
                 batteryBitmap.clearColorFilter();                
             } else {
                 batteryBitmap.setColorFilter(mColorInfo.lastColor, PorterDuff.Mode.SRC_IN);
             }
+         }
             v.setImageDrawable(batteryBitmap);
         }
         N = mLabelViews.size();
@@ -268,6 +292,9 @@ public class SbBatteryController extends LinearLayout {
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUSBAR_BATTERY_ICON), false,
                     this);
+            resolver.registerContentObserver(Settings.System
+                    .getUriFor(Settings.System.PAC_STATUS), false,
+                    this);
         }
 
         @Override
@@ -278,13 +305,10 @@ public class SbBatteryController extends LinearLayout {
 
     private void updateSettings() {
         // Slog.i(TAG, "updated settings values");
-        ContentResolver cr = mContext.getContentResolver();
-        mBatteryStyle = Settings.System.getInt(cr,
+        mBatteryStyle = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.STATUSBAR_BATTERY_ICON, 0);
-        mFontSize = Settings.System.getInt(cr,
-                Settings.System.STATUSBAR_FONT_SIZE, mStockFontSize);
-        int width = StatusBarHelpers.getIconWidth(mContext, mFontSize);
-        mBatteryIcon.getLayoutParams().width = width;
+        mStatusPac = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.PAC_STATUS, 0) == 1;
 
         switch (mBatteryStyle) {
             case STYLE_ICON_ONLY:
@@ -335,6 +359,36 @@ public class SbBatteryController extends LinearLayout {
                 mBatteryIcon.setVisibility(View.VISIBLE);
                 setVisibility(View.VISIBLE);
                 break;
+            case STYLE_ICON_RACING_RB:
+                mBatteryText.setVisibility(View.GONE);
+                mBatteryCenterText.setVisibility(View.GONE);
+                mBatteryIcon.setVisibility(View.VISIBLE);
+                setVisibility(View.VISIBLE);
+                break;
+            case STYLE_ICON_GAUGE_RB:
+                mBatteryText.setVisibility(View.GONE);
+                mBatteryCenterText.setVisibility(View.GONE);
+                mBatteryIcon.setVisibility(View.VISIBLE);
+                setVisibility(View.VISIBLE);
+                break;
+            case STYLE_ICON_PLANET_RB:
+                mBatteryText.setVisibility(View.GONE);
+                mBatteryCenterText.setVisibility(View.GONE);
+                mBatteryIcon.setVisibility(View.VISIBLE);
+                setVisibility(View.VISIBLE);
+                break;
+            case STYLE_ICON_SLIDER_RB:
+                mBatteryText.setVisibility(View.GONE);
+                mBatteryCenterText.setVisibility(View.GONE);
+                mBatteryIcon.setVisibility(View.VISIBLE);
+                setVisibility(View.VISIBLE);
+                break;
+            case STYLE_ICON_BRICK_RB:
+                mBatteryText.setVisibility(View.GONE);
+                mBatteryCenterText.setVisibility(View.GONE);
+                mBatteryIcon.setVisibility(View.VISIBLE);
+                setVisibility(View.VISIBLE);
+                break;
             default:
                 mBatteryText.setVisibility(View.GONE);
                 mBatteryCenterText.setVisibility(View.GONE);
@@ -343,12 +397,6 @@ public class SbBatteryController extends LinearLayout {
                 break;
         }
 
-        if (StatusBarHelpers.pixelsToSp(mContext,mBatteryTextOnly.getTextSize()) != mFontSize) {
-            // assume if one needs changed, all of them do.
-            mBatteryTextOnly.setTextSize(mFontSize);
-            mBatteryTextOnly_Low.setTextSize(mFontSize);
-            mBatteryTextOnly_Plugged.setTextSize(mFontSize);
-        }
         setBatteryIcon(mLevel, mPlugged);
 
     }
