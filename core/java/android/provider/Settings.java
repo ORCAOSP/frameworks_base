@@ -2561,7 +2561,7 @@ public final class Settings {
          */
         public static final String STATUSBAR_CLOCK_WEEKDAY = "statusbar_clock_weekday";
 
-        /**        
+        /**
          * Show the pending notification counts as overlays on the statusbar
          * @hide
          */
@@ -4374,6 +4374,13 @@ public final class Settings {
          * @hide
          */
         public static final String MISSED_CALL_BREATH = "missed_call_breath";
+
+        /**
+         * Volume key controls ringtone or media sound stream
+         *
+         * @hide
+         */
+        public static final String VOLUME_KEYS_CONTROL_RING_STREAM = "volume_keys_control_ring_stream";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
