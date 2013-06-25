@@ -90,7 +90,10 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
     private boolean mWaitingForWindowAnimation;
     private long mWindowAnimationStartTime;
 
-    private ImageView mRecentsKillAllButton;
+    private ImageView mRecentsKillAllButtonBR;
+    private ImageView mRecentsKillAllButtonBL;
+    private ImageView mRecentsKillAllButtonTR;
+    private ImageView mRecentsKillAllButtonTL;
     private LinearColorBar mRamUsageBar;
 
     private RecentTasksLoader mRecentTasksLoader;
@@ -104,6 +107,13 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
     private int mAndroidDpi = DisplayMetrics.DENSITY_DEVICE;
     boolean ramBarEnabled;
     boolean mRecentsKillAllEnabled;
+
+    private static int mRecentStyle;
+    private static final int CLEAR_DISABLE = 0;
+    private static final int CLEAR_BOTTOM_RIGHT = 1;
+    private static final int CLEAR_BOTTOM_LEFT = 2;
+    private static final int CLEAR_TOP_RIGHT = 3;
+    private static final int CLEAR_TOP_LEFT = 4;
 
     TextView mBackgroundProcessText;
     TextView mForegroundProcessText;
@@ -506,8 +516,29 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
         mRamUsageBar = (LinearColorBar) findViewById(R.id.ram_usage_bar);
         mForegroundProcessText = (TextView) findViewById(R.id.foregroundText);
         mBackgroundProcessText = (TextView) findViewById(R.id.backgroundText);
-        mRecentsKillAllButton = (ImageView) findViewById(R.id.recents_kill_all_button);
-        mRecentsKillAllButton.setOnClickListener(new OnClickListener() {
+        mRecentsKillAllButtonBR = (ImageView) findViewById(R.id.recents_kill_all_buttonBR);
+        mRecentsKillAllButtonBR.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                killAllRecentApps();
+            }
+        });
+        mRecentsKillAllButtonBL = (ImageView) findViewById(R.id.recents_kill_all_buttonBL);
+        mRecentsKillAllButtonBL.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                killAllRecentApps();
+            }
+        });
+        mRecentsKillAllButtonTR = (ImageView) findViewById(R.id.recents_kill_all_buttonTR);
+        mRecentsKillAllButtonTR.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                killAllRecentApps();
+            }
+        });
+        mRecentsKillAllButtonTL = (ImageView) findViewById(R.id.recents_kill_all_buttonTL);
+        mRecentsKillAllButtonTL.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 killAllRecentApps();

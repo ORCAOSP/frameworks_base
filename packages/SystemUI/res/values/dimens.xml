@@ -28,8 +28,8 @@
 
     <!-- Size of application thumbnail -->
     <dimen name="status_bar_recents_thumbnail_width">170dp</dimen>
-    <dimen name="status_bar_recents_thumbnail_height">150dp</dimen>
-    <dimen name="status_bar_recents_thumbnail_bg_padding">4dp</dimen>
+    <dimen name="status_bar_recents_thumbnail_height">145dp</dimen>
+    <dimen name="status_bar_recents_thumbnail_bg_padding">2dp</dimen>
 
     <!-- Size of application label text -->
     <dimen name="status_bar_recents_app_label_text_size">14dip</dimen>
@@ -50,7 +50,7 @@
     <!-- Left margin of application label text -->
     <dimen name="status_bar_recents_app_label_left_margin">0dip</dimen>
     <!-- Padding between recents items -->
-    <dimen name="status_bar_recents_item_padding">0dip</dimen>
+    <dimen name="status_bar_recents_item_padding">15dip</dimen>
     <!-- When recents first appears, how far the icon and label of the primary activity
          travel -->
     <dimen name="status_bar_recents_app_icon_translate_distance">35dip</dimen>

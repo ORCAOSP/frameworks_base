@@ -62,13 +62,33 @@
 
         </com.android.systemui.recent.RecentsHorizontalScrollView>
 
-        <ImageView android:id="@+id/recents_kill_all_button"
+    <ImageView android:id="@+id/recents_kill_all_buttonBR"
             android:layout_gravity="bottom|right"
-            android:layout_marginTop="50dp"
-            android:layout_marginRight="50dp"
+            android:layout_marginBottom="30dp"
+            android:layout_marginRight="30dp"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
-            android:scaleType="center"
+            android:src="@drawable/ic_recents_clear" />
+    <ImageView android:id="@+id/recents_kill_all_buttonBL"
+            android:layout_gravity="bottom|left"
+            android:layout_marginBottom="30dp"
+            android:layout_marginLeft="30dp"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:src="@drawable/ic_recents_clear" />
+    <ImageView android:id="@+id/recents_kill_all_buttonTR"
+            android:layout_gravity="top|right"
+            android:layout_marginTop="50dp"
+            android:layout_marginRight="30dp"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:src="@drawable/ic_recents_clear" />
+    <ImageView android:id="@+id/recents_kill_all_buttonTL"
+            android:layout_gravity="top|left"
+            android:layout_marginTop="50dp"
+            android:layout_marginLeft="30dp"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
             android:src="@drawable/ic_recents_clear" />
 
     <view class="com.android.systemui.recent.LinearColorBar"
