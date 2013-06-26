@@ -2678,8 +2678,7 @@ public final class Settings {
         public static final String FULLSCREEN_KEYBOARD = "fullscreen_keyboard";
 
        /**
-        * Torch state (flashlight)
-		* FIXME: move me to global state
+        * Key to store Torch state.
         * @hide 
         */
         public static final String TORCH_STATE = "torch_state";
