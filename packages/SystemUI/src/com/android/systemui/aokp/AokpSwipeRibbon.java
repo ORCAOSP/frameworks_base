@@ -473,6 +473,7 @@ public class AokpSwipeRibbon extends LinearLayout {
             toggleMap.put(QUICKRECORD_TOGGLE, QuickRecordToggle.class);
             toggleMap.put(POWERMENU_TOGGLE, PowerMenuToggle.class);
             toggleMap.put(PROFILE_TOGGLE, ProfileToggle.class);
+            toggleMap.put(HYBRID_TOGGLE, HybridToggle.class);
             toggleMap.put(QUIETHOURS_TOGGLE, QuietHoursToggle.class);
             toggleMap.put(ORCATOOLS_TOGGLE, OrcaToolsToggle.class);
             toggleMap.put(SLEEP_TOGGLE, SleepToggle.class);
@@ -484,6 +485,7 @@ public class AokpSwipeRibbon extends LinearLayout {
             toggleMap.put(CUSTOM_TOGGLE, CustomToggle.class);
             toggleMap.put(STAYAWAKE_TOGGLE, StayAwakeToggle.class);
             toggleMap.put(WIRELESS_ADB_TOGGLE, WirelessAdbToggle.class);
+            toggleMap.put(MUSIC_TOGGLE, MusicToggle.class);
             // toggleMap.put(BT_TETHER_TOGGLE, null);
         }
         return toggleMap;
