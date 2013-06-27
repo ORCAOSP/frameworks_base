@@ -1836,14 +1836,14 @@ final class ActivityStack {
             }
         }
         if (prevPrivacy && !curPrivacy) {
-            mService.mHandler.sendEmptyMessage(
-                    ActivityManagerService.CANCEL_PRIVACY_NOTIFICATION_MSG);
+            Message msg = mService.mHandler.obtainMessage(
+                    ActivityManagerService.CANCEL_PRIVACY_NOTIFICATION_MSG, prev.userId);
+            msg.sendToTarget();
         } else if ((!prevPrivacy && curPrivacy) ||
                 (prevPrivacy && curPrivacy && !next.packageName.equals(prev.packageName))) {
             Message msg = mService.mHandler.obtainMessage(
-                    ActivityManagerService.POST_PRIVACY_NOTIFICATION_MSG);
-            msg.obj = next;
-            mService.mHandler.sendMessage(msg);
+                    ActivityManagerService.POST_PRIVACY_NOTIFICATION_MSG, next);
+            msg.sendToTarget();
         }
     }
 

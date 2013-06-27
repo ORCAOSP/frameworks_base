@@ -902,8 +902,8 @@ public final class ActivityManagerService extends ActivityManagerNative
     static final int CONTINUE_USER_SWITCH_MSG = 35;
     static final int USER_SWITCH_TIMEOUT_MSG = 36;
 
-	static final int POST_PRIVACY_NOTIFICATION_MSG = 40;
-	static final int CANCEL_PRIVACY_NOTIFICATION_MSG = 41;
+    static final int POST_PRIVACY_NOTIFICATION_MSG = 40;
+    static final int CANCEL_PRIVACY_NOTIFICATION_MSG = 41;
 
     static final int FIRST_ACTIVITY_STACK_MSG = 100;
     static final int FIRST_BROADCAST_QUEUE_MSG = 200;
@@ -1411,7 +1411,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     notification.icon = com.android.internal.R.drawable.stat_notify_privacy_guard;
                     notification.when = 0;
                     notification.flags = Notification.FLAG_ONGOING_EVENT;
-                    notification.tickerText = title;
+                    notification.priority = Notification.PRIORITY_LOW;
                     notification.defaults = 0;
                     notification.sound = null;
                     notification.vibrate = null;
@@ -1448,7 +1448,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                             "Error canceling notification for service", e);
                 } catch (RemoteException e) {
                 }
-            } break;            
+            } break;
             }
         }
     };

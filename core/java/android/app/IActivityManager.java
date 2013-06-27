@@ -192,7 +192,7 @@ public interface IActivityManager extends IInterface {
             boolean isForeground) throws RemoteException;
 
     public boolean isPrivacyGuardEnabledForProcess(int pid) throws RemoteException;
-    
+
     public int checkPermission(String permission, int pid, int uid)
             throws RemoteException;
 

@@ -1331,7 +1331,7 @@ final class ApplicationPackageManager extends PackageManager {
         }
         return false;
     }
-    
+
     /**
      * @hide
      */

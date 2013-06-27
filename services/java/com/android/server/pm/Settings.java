@@ -444,10 +444,10 @@ final class Settings {
                             final boolean installed = installUser == null
                                     || installUser.getIdentifier() == UserHandle.USER_ALL
                                     || installUser.getIdentifier() == user.id;
-							final boolean privacyGuard = android.provider.Settings.Secure.getIntForUser(
+                            final boolean privacyGuard = android.provider.Settings.Secure.getIntForUser(
                                     mContext.getContentResolver(),
                                     android.provider.Settings.Secure.PRIVACY_GUARD_DEFAULT,
-                                    0, user.id) == 1;                                    
+                                    0, user.id) == 1;
                             p.setUserState(user.id, COMPONENT_ENABLED_STATE_DEFAULT,
                                     installed,
                                     true, // stopped,
@@ -916,7 +916,7 @@ final class Settings {
                     final String privacyGuardStr = parser.getAttributeValue(null, ATTR_PRIVACY_GUARD);
                     final boolean privacyGuard = privacyGuardStr == null
                             ? false : Boolean.parseBoolean(privacyGuardStr);
-                            
+
                     HashSet<String> enabledComponents = null;
                     HashSet<String> disabledComponents = null;
 
@@ -2504,7 +2504,7 @@ final class Settings {
         }
         return pkg.isPrivacyGuard(userId);
     }
-    
+
     int getApplicationEnabledSettingLPr(String packageName, int userId) {
         final PackageSetting pkg = mPackages.get(packageName);
         if (pkg == null) {
