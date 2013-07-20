@@ -62,12 +62,7 @@ public class BatteryController extends BroadcastReceiver {
     public static final int STYLE_ICON_SLIDER = 10;
     public static final int STYLE_ICON_BRICK = 11;
     public static final int STYLE_ICON_RUSH = 12;
-    public static final int STYLE_ICON_HONEYCOMB = 13;
-    public static final int STYLE_ICON_DROID = 14;
-    public static final int STYLE_ICON_SPHERE = 15;
-    public static final int STYLE_ICON_NUMBERS = 16;
-    public static final int STYLE_ICON_DIGITAL_NUMBERS = 17;
-    public static final int STYLE_HIDE = 18;
+    public static final int STYLE_HIDE = 13;
 
     public interface BatteryStateChangeCallback {
         public void onBatteryLevelChanged(int level, boolean pluggedIn);
@@ -119,7 +114,7 @@ public class BatteryController extends BroadcastReceiver {
         final int icon;
         switch (mBatteryStyle) {
             case STYLE_ICON_CIRCLE:
-                 icon = plugged ? R.drawable.stat_sys_battery_charge_circle
+                 icon = mPlugged ? R.drawable.stat_sys_battery_charge_circle
                  : R.drawable.stat_sys_battery_circle;
                  break;
             case STYLE_ICON_SQUARE:
@@ -153,26 +148,6 @@ public class BatteryController extends BroadcastReceiver {
             case STYLE_ICON_RUSH:
                  icon = mPlugged ? R.drawable.stat_sys_battery_charge_rush
                  : R.drawable.stat_sys_battery_rush;
-                 break;
-            case STYLE_ICON_HONEYCOMB:
-                 icon = mplugged ? R.drawable.stat_sys_battery_honeycomb_charge
-                 : R.drawable.stat_sys_battery_honeycomb;
-                 break;
-            case STYLE_ICON_DROID:
-                 icon = mplugged ? R.drawable.stat_sys_battery_droid_charge
-                 : R.drawable.stat_sys_battery_droid;
-                 break;
-            case STYLE_ICON_SPHERE:
-                 icon = mplugged ? R.drawable.stat_sys_battery_sphere_charge
-                 : R.drawable.stat_sys_battery_sphere;
-                 break;
-            case STYLE_ICON_NUMBERS:
-                 icon = mplugged ? R.drawable.stat_sys_battery_numbers_charge
-                 : R.drawable.stat_sys_battery_numbers;
-                 break;
-            case STYLE_ICON_DIGITAL_NUMBERS:
-                 icon = mplugged ? R.drawable.stat_sys_battery_digital_numbers_charge
-                 : R.drawable.stat_sys_battery_digital_numbers;
                  break;
             default:
                  icon = mPlugged ? R.drawable.stat_sys_battery_charge
