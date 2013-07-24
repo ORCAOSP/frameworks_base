@@ -155,23 +155,23 @@ public class BatteryController extends BroadcastReceiver {
                  : R.drawable.stat_sys_battery_rush;
                  break;
             case STYLE_ICON_HONEYCOMB:
-                 icon = mplugged ? R.drawable.stat_sys_battery_honeycomb_charge
+                 icon = mPlugged ? R.drawable.stat_sys_battery_honeycomb_charge
                  : R.drawable.stat_sys_battery_honeycomb;
                  break;
             case STYLE_ICON_DROID:
-                 icon = mplugged ? R.drawable.stat_sys_battery_droid_charge
+                 icon = mPlugged ? R.drawable.stat_sys_battery_droid_charge
                  : R.drawable.stat_sys_battery_droid;
                  break;
             case STYLE_ICON_SPHERE:
-                 icon = mplugged ? R.drawable.stat_sys_battery_sphere_charge
+                 icon = mPlugged ? R.drawable.stat_sys_battery_sphere_charge
                  : R.drawable.stat_sys_battery_sphere;
                  break;
             case STYLE_ICON_NUMBERS:
-                 icon = mplugged ? R.drawable.stat_sys_battery_numbers_charge
+                 icon = mPlugged ? R.drawable.stat_sys_battery_numbers_charge
                  : R.drawable.stat_sys_battery_numbers;
                  break;
             case STYLE_ICON_DIGITAL_NUMBERS:
-                 icon = mplugged ? R.drawable.stat_sys_battery_digital_numbers_charge
+                 icon = mPlugged ? R.drawable.stat_sys_battery_digital_numbers_charge
                  : R.drawable.stat_sys_battery_digital_numbers;
                  break;                                  
             default:
