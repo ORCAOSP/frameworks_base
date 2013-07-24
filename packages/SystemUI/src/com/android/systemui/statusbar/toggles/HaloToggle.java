@@ -51,7 +51,7 @@ public class HaloToggle extends StatefulToggle {
         boolean enabled = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.HALO_ENABLED, 0) == 1;
         setEnabledState(enabled);
-        setIcon(enabled ? R.drawable.ic_qs_orca_halo_on : R.drawable.ic_qs_orca_halo_off);
+        setIcon(enabled ? R.drawable.ic_notify_halo_pressed : R.drawable.ic_notify_halo_normal);
         setLabel(enabled ? R.string.quick_settings_halo_on_label
                 : R.string.quick_settings_halo_off_label);
         super.updateView();
