@@ -60,8 +60,6 @@ import android.util.Slog;
 import android.util.TimeUtils;
 import android.view.WindowManagerPolicy;
 
-import com.android.internal.app.ThemeUtils;
-
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -150,7 +148,6 @@ public final class PowerManagerService extends IPowerManager.Stub
     // This is subtracted from the end of the screen off timeout so the
     // minimum screen off timeout should be longer than this.
     private static final int SCREEN_DIM_DURATION = 7 * 1000;
-    private static final int BUTTON_ON_DURATION = 5 * 1000;
 
     // The maximum screen dim time expressed as a ratio relative to the screen
     // off timeout.  If the screen off timeout is very short then we want the
@@ -169,11 +166,7 @@ public final class PowerManagerService extends IPowerManager.Stub
     // effectively and terminate the dream.
     private static final int DREAM_BATTERY_LEVEL_DRAIN_CUTOFF = 5;
 
-    // Max time (microseconds) to allow a CPU boost for
-    private static final int MAX_CPU_BOOST_TIME = 5000000;
-
     private Context mContext;
-    private Context mUiContext;
     private LightsService mLightsService;
     private BatteryService mBatteryService;
     private DisplayManagerService mDisplayManagerService;
@@ -186,9 +179,7 @@ public final class PowerManagerService extends IPowerManager.Stub
     private WirelessChargerDetector mWirelessChargerDetector;
     private SettingsObserver mSettingsObserver;
     private DreamManagerService mDreamManager;
-    private AutoBrightnessHandler mAutoBrightnessHandler;
     private LightsService.Light mAttentionLight;
-    private LightsService.Light mButtonsLight;
 
     private final Object mLock = new Object();
 
@@ -245,11 +236,20 @@ public final class PowerManagerService extends IPowerManager.Stub
     // is actually on or actually off or whatever was requested.
     private boolean mDisplayReady;
 
-    // True if holding a wake-lock to block suspend of the CPU.
+    // The suspend blocker used to keep the CPU alive when an application has acquired
+    // a wake lock.
+    private final SuspendBlocker mWakeLockSuspendBlocker;
+
+    // True if the wake lock suspend blocker has been acquired.
     private boolean mHoldingWakeLockSuspendBlocker;
 
-    // The suspend blocker used to keep the CPU alive when wake locks have been acquired.
-    private final SuspendBlocker mWakeLockSuspendBlocker;
+    // The suspend blocker used to keep the CPU alive when the display is on, the
+    // display is getting ready or there is user activity (in which case the display
+    // must be on).
+    private final SuspendBlocker mDisplaySuspendBlocker;
+
+    // True if the display suspend blocker has been acquired.
+    private boolean mHoldingDisplaySuspendBlocker;
 
     // The screen on blocker used to keep the screen from turning on while the lock
     // screen is coming up.
@@ -296,30 +296,17 @@ public final class PowerManagerService extends IPowerManager.Stub
     // Default value for dreams activate-on-dock
     private boolean mDreamsActivatedOnDockByDefaultConfig;
 
-    // True if we should fade the screen while turning it off, false if we should play
-    // a stylish electron beam animation instead.
-    private boolean mElectronBeamFadesConfig;
-
     // True if dreams are enabled by the user.
     private boolean mDreamsEnabledSetting;
 
     // True if dreams should be activated on sleep.
     private boolean mDreamsActivateOnSleepSetting;
 
-    // True if dreams should be activated on wireless charging.
-    private boolean mDreamsActivateOnWirelessCharger;
-
     // True if dreams should be activated on dock.
     private boolean mDreamsActivateOnDockSetting;
 
     // The screen off timeout setting value in milliseconds.
     private int mScreenOffTimeoutSetting;
-
-    // Slim settings - override config for ElectronBeam
-    // used here to send values to DispLayPowerController handler
-    // from SettingsObserver
-    private boolean mElectronBeamOffEnabled;
-    private int mElectronBeamMode;
 
     // The maximum allowable screen off timeout according to the device
     // administration policy.  Overrides other settings.
@@ -388,15 +375,16 @@ public final class PowerManagerService extends IPowerManager.Stub
     private static native void nativeReleaseSuspendBlocker(String name);
     private static native void nativeSetInteractive(boolean enable);
     private static native void nativeSetAutoSuspend(boolean enable);
-    private static native void nativeCpuBoost(int duration);
 
     public PowerManagerService() {
         synchronized (mLock) {
-            mWakeLockSuspendBlocker = createSuspendBlockerLocked("PowerManagerService");
-            mWakeLockSuspendBlocker.acquire();
+            mWakeLockSuspendBlocker = createSuspendBlockerLocked("PowerManagerService.WakeLocks");
+            mDisplaySuspendBlocker = createSuspendBlockerLocked("PowerManagerService.Display");
+            mDisplaySuspendBlocker.acquire();
+            mHoldingDisplaySuspendBlocker = true;
+
             mScreenOnBlocker = new ScreenOnBlockerImpl();
             mDisplayBlanker = new DisplayBlankerImpl();
-            mHoldingWakeLockSuspendBlocker = true;
             mWakefulness = WAKEFULNESS_AWAKE;
         }
 
@@ -429,9 +417,6 @@ public final class PowerManagerService extends IPowerManager.Stub
         // activity manager is not running when the constructor is called, so we
         // have to defer setting the screen state until this point.
         mDisplayBlanker.unblankAllDisplays();
-
-        mAutoBrightnessHandler = new AutoBrightnessHandler(context);
-
     }
 
     public void setPolicy(WindowManagerPolicy policy) {
@@ -450,7 +435,7 @@ public final class PowerManagerService extends IPowerManager.Stub
             mScreenBrightnessSettingMaximum = pm.getMaximumScreenBrightnessSetting();
             mScreenBrightnessSettingDefault = pm.getDefaultScreenBrightnessSetting();
 
-            SensorManager sensorManager = new SystemSensorManager(mHandler.getLooper());
+            SensorManager sensorManager = new SystemSensorManager(mContext, mHandler.getLooper());
 
             // The notifier runs on the system server's main looper so as not to interfere
             // with the animations and other critical functions of the power manager.
@@ -469,7 +454,6 @@ public final class PowerManagerService extends IPowerManager.Stub
                     createSuspendBlockerLocked("PowerManagerService.WirelessChargerDetector"));
             mSettingsObserver = new SettingsObserver(mHandler);
             mAttentionLight = mLightsService.getLight(LightsService.LIGHT_ID_ATTENTION);
-            mButtonsLight = mLightsService.getLight(LightsService.LIGHT_ID_BUTTONS);
 
             // Register for broadcasts from other components of the system.
             IntentFilter filter = new IntentFilter();
@@ -519,12 +503,7 @@ public final class PowerManagerService extends IPowerManager.Stub
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.AUTO_BRIGHTNESS_RESPONSIVENESS),
                     false, mSettingsObserver, UserHandle.USER_ALL);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.SYSTEM_POWER_ENABLE_CRT_OFF),
-                    false, mSettingsObserver, UserHandle.USER_ALL);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.SYSTEM_POWER_CRT_MODE),
-                    false, mSettingsObserver, UserHandle.USER_ALL);
+
             // Go.
             readConfigurationLocked();
             updateSettingsLocked();
@@ -546,8 +525,6 @@ public final class PowerManagerService extends IPowerManager.Stub
                 com.android.internal.R.bool.config_dreamsActivatedOnSleepByDefault);
         mDreamsActivatedOnDockByDefaultConfig = resources.getBoolean(
                 com.android.internal.R.bool.config_dreamsActivatedOnDockByDefault);
-        mElectronBeamFadesConfig = resources.getBoolean(
-                com.android.internal.R.bool.config_animateScreenLights);
     }
 
     private void updateSettingsLocked() {
@@ -561,10 +538,6 @@ public final class PowerManagerService extends IPowerManager.Stub
                 Settings.Secure.SCREENSAVER_ACTIVATE_ON_SLEEP,
                 mDreamsActivatedOnSleepByDefaultConfig ? 1 : 0,
                 UserHandle.USER_CURRENT) != 0);
-        mDreamsActivateOnWirelessCharger = (Settings.Secure.getIntForUser(resolver,
-                Settings.Secure.SCREENSAVER_ACTIVATE_ON_WIRELESS_CHARGE,
-                0, // disabled by default
-                UserHandle.USER_CURRENT) != 0);
         mDreamsActivateOnDockSetting = (Settings.Secure.getIntForUser(resolver,
                 Settings.Secure.SCREENSAVER_ACTIVATE_ON_DOCK,
                 mDreamsActivatedOnDockByDefaultConfig ? 1 : 0,
@@ -574,15 +547,6 @@ public final class PowerManagerService extends IPowerManager.Stub
                 UserHandle.USER_CURRENT);
         mStayOnWhilePluggedInSetting = Settings.Global.getInt(resolver,
                 Settings.Global.STAY_ON_WHILE_PLUGGED_IN, BatteryManager.BATTERY_PLUGGED_AC);
-
-        // respect default config values
-        mElectronBeamOffEnabled = Settings.System.getIntForUser(resolver,
-                Settings.System.SYSTEM_POWER_ENABLE_CRT_OFF,
-                mElectronBeamFadesConfig ? 0 : 1,
-                UserHandle.USER_CURRENT) == 1;
-        mElectronBeamMode = Settings.System.getIntForUser(resolver,
-                Settings.System.SYSTEM_POWER_CRT_MODE,
-                0, UserHandle.USER_CURRENT);
 
         final int oldScreenBrightnessSetting = mScreenBrightnessSetting;
         mScreenBrightnessSetting = Settings.System.getIntForUser(resolver,
@@ -601,14 +565,9 @@ public final class PowerManagerService extends IPowerManager.Stub
             mTemporaryScreenAutoBrightnessAdjustmentSettingOverride = Float.NaN;
         }
 
-        final int oldScreenBrightnessModeSetting =
-                mScreenBrightnessModeSetting;
         mScreenBrightnessModeSetting = Settings.System.getIntForUser(resolver,
                 Settings.System.SCREEN_BRIGHTNESS_MODE,
                 Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL, UserHandle.USER_CURRENT);
-        if (oldScreenBrightnessModeSetting != mScreenBrightnessModeSetting) {
-            mAutoBrightnessHandler.onAutoBrightnessChanged(mScreenBrightnessModeSetting);
-        }
 
         final float newAutoBrightnessResponsitivityFactor = Settings.System.getFloatForUser(resolver,
                 Settings.System.AUTO_BRIGHTNESS_RESPONSIVENESS, 1.0f,
@@ -720,17 +679,21 @@ public final class PowerManagerService extends IPowerManager.Stub
 
     private void releaseWakeLockInternal(IBinder lock, int flags) {
         synchronized (mLock) {
-            if (DEBUG_SPEW) {
-                Slog.d(TAG, "releaseWakeLockInternal: lock=" + Objects.hashCode(lock)
-                        + ", flags=0x" + Integer.toHexString(flags));
-            }
-
             int index = findWakeLockIndexLocked(lock);
             if (index < 0) {
+                if (DEBUG_SPEW) {
+                    Slog.d(TAG, "releaseWakeLockInternal: lock=" + Objects.hashCode(lock)
+                            + " [not found], flags=0x" + Integer.toHexString(flags));
+                }
                 return;
             }
 
             WakeLock wakeLock = mWakeLocks.get(index);
+            if (DEBUG_SPEW) {
+                Slog.d(TAG, "releaseWakeLockInternal: lock=" + Objects.hashCode(lock)
+                        + " [" + wakeLock.mTag + "], flags=0x" + Integer.toHexString(flags));
+            }
+
             mWakeLocks.remove(index);
             notifyWakeLockReleasedLocked(wakeLock);
             wakeLock.mLock.unlinkToDeath(wakeLock, 0);
@@ -748,7 +711,8 @@ public final class PowerManagerService extends IPowerManager.Stub
     private void handleWakeLockDeath(WakeLock wakeLock) {
         synchronized (mLock) {
             if (DEBUG_SPEW) {
-                Slog.d(TAG, "handleWakeLockDeath: lock=" + Objects.hashCode(wakeLock.mLock));
+                Slog.d(TAG, "handleWakeLockDeath: lock=" + Objects.hashCode(wakeLock.mLock)
+                        + " [" + wakeLock.mTag + "]");
             }
 
             int index = mWakeLocks.indexOf(wakeLock);
@@ -800,10 +764,19 @@ public final class PowerManagerService extends IPowerManager.Stub
         synchronized (mLock) {
             int index = findWakeLockIndexLocked(lock);
             if (index < 0) {
+                if (DEBUG_SPEW) {
+                    Slog.d(TAG, "updateWakeLockWorkSourceInternal: lock=" + Objects.hashCode(lock)
+                            + " [not found], ws=" + ws);
+                }
                 throw new IllegalArgumentException("Wake lock not active");
             }
 
             WakeLock wakeLock = mWakeLocks.get(index);
+            if (DEBUG_SPEW) {
+                Slog.d(TAG, "updateWakeLockWorkSourceInternal: lock=" + Objects.hashCode(lock)
+                        + " [" + wakeLock.mTag + "], ws=" + ws);
+            }
+
             if (!wakeLock.hasSameWorkSource(ws)) {
                 notifyWakeLockReleasedLocked(wakeLock);
                 wakeLock.updateWorkSource(ws);
@@ -1260,11 +1233,6 @@ public final class PowerManagerService extends IPowerManager.Stub
             return false;
         }
 
-        if (!Settings.System.getBoolean(mContext.getContentResolver(),
-                Settings.System.WAKEUP_WHEN_PLUGGED_UNPLUGGED, true)) {
-            return false;
-        }
-
         // Otherwise wake up!
         return true;
     }
@@ -1369,12 +1337,6 @@ public final class PowerManagerService extends IPowerManager.Stub
                     nextTimeout = mLastUserActivityTime
                             + screenOffTimeout - screenDimDuration;
                     if (now < nextTimeout) {
-                        if (now > mLastUserActivityTime + BUTTON_ON_DURATION) {
-                            mButtonsLight.setBrightness(0);
-                        } else {
-                            mButtonsLight.setBrightness(mDisplayPowerRequest.screenBrightness);
-                            nextTimeout = now + BUTTON_ON_DURATION;
-                        }
                         mUserActivitySummary |= USER_ACTIVITY_SCREEN_BRIGHT;
                     } else {
                         nextTimeout = mLastUserActivityTime + screenOffTimeout;
@@ -1433,15 +1395,11 @@ public final class PowerManagerService extends IPowerManager.Stub
 
     private int getScreenOffTimeoutLocked() {
         int timeout = mScreenOffTimeoutSetting;
-        if (timeout == mMaximumScreenOffTimeoutFromDeviceAdmin) {
-            /** Skip Math.min()'s to force MAX_VALUE for SCREEN_OFF_TIMEOUT */
-        } else {
-            if (isMaximumScreenOffTimeoutFromDeviceAdminEnforcedLocked()) {
-                timeout = Math.min(timeout, mMaximumScreenOffTimeoutFromDeviceAdmin);
-            }
-            if (mUserActivityTimeoutOverrideFromWindowManager >= 0) {
-                timeout = (int)Math.min(timeout, mUserActivityTimeoutOverrideFromWindowManager);
-            }
+        if (isMaximumScreenOffTimeoutFromDeviceAdminEnforcedLocked()) {
+            timeout = Math.min(timeout, mMaximumScreenOffTimeoutFromDeviceAdmin);
+        }
+        if (mUserActivityTimeoutOverrideFromWindowManager >= 0) {
+            timeout = (int)Math.min(timeout, mUserActivityTimeoutOverrideFromWindowManager);
         }
         return Math.max(timeout, MINIMUM_SCREEN_OFF_TIMEOUT);
     }
@@ -1486,12 +1444,9 @@ public final class PowerManagerService extends IPowerManager.Stub
      * activity timeout has expired and it's bedtime.
      */
     private boolean shouldNapAtBedTimeLocked() {
-        return (mDreamsActivateOnSleepSetting
-                        && mPlugType != BatteryManager.BATTERY_PLUGGED_WIRELESS)
+        return mDreamsActivateOnSleepSetting
                 || (mDreamsActivateOnDockSetting
-                        && mDockState != Intent.EXTRA_DOCK_STATE_UNDOCKED)
-                || (mDreamsActivateOnWirelessCharger
-                        && mPlugType == BatteryManager.BATTERY_PLUGGED_WIRELESS);
+                        && mDockState != Intent.EXTRA_DOCK_STATE_UNDOCKED);
     }
 
     /**
@@ -1719,9 +1674,6 @@ public final class PowerManagerService extends IPowerManager.Stub
 
             mDisplayPowerRequest.responsitivityFactor = mAutoBrightnessResponsitivityFactor;
 
-            mDisplayPowerRequest.electronBeamOffEnabled = mElectronBeamOffEnabled;
-            mDisplayPowerRequest.electronBeamMode = mElectronBeamMode;
-
             mDisplayReady = mDisplayPowerController.requestPowerState(mDisplayPowerRequest,
                     mRequestWaitForNegativeProximity);
             mRequestWaitForNegativeProximity = false;
@@ -1795,29 +1747,30 @@ public final class PowerManagerService extends IPowerManager.Stub
      * This function must have no other side-effects.
      */
     private void updateSuspendBlockerLocked() {
-        boolean wantCpu = isCpuNeededLocked();
-        if (wantCpu != mHoldingWakeLockSuspendBlocker) {
-            mHoldingWakeLockSuspendBlocker = wantCpu;
-            if (wantCpu) {
-                if (DEBUG) {
-                    Slog.d(TAG, "updateSuspendBlockerLocked: Acquiring suspend blocker.");
-                }
-                mWakeLockSuspendBlocker.acquire();
-            } else {
-                if (DEBUG) {
-                    Slog.d(TAG, "updateSuspendBlockerLocked: Releasing suspend blocker.");
-                }
-                mWakeLockSuspendBlocker.release();
-            }
-        }
-    }
-
-    private boolean isCpuNeededLocked() {
-        return !mBootCompleted
-                || mWakeLockSummary != 0
-                || mUserActivitySummary != 0
+        final boolean needWakeLockSuspendBlocker = (mWakeLockSummary != 0);
+        final boolean needDisplaySuspendBlocker = (mUserActivitySummary != 0
                 || mDisplayPowerRequest.screenState != DisplayPowerRequest.SCREEN_STATE_OFF
-                || !mDisplayReady;
+                || !mDisplayReady || !mBootCompleted);
+
+        // First acquire suspend blockers if needed.
+        if (needWakeLockSuspendBlocker && !mHoldingWakeLockSuspendBlocker) {
+            mWakeLockSuspendBlocker.acquire();
+            mHoldingWakeLockSuspendBlocker = true;
+        }
+        if (needDisplaySuspendBlocker && !mHoldingDisplaySuspendBlocker) {
+            mDisplaySuspendBlocker.acquire();
+            mHoldingDisplaySuspendBlocker = true;
+        }
+
+        // Then release suspend blockers if needed.
+        if (!needWakeLockSuspendBlocker && mHoldingWakeLockSuspendBlocker) {
+            mWakeLockSuspendBlocker.release();
+            mHoldingWakeLockSuspendBlocker = false;
+        }
+        if (!needDisplaySuspendBlocker && mHoldingDisplaySuspendBlocker) {
+            mDisplaySuspendBlocker.release();
+            mHoldingDisplaySuspendBlocker = false;
+        }
     }
 
     @Override // Binder call
@@ -1911,20 +1864,6 @@ public final class PowerManagerService extends IPowerManager.Stub
         }
     }
 
-    /**
-     * Boost the CPU
-     * @param duration Duration to boost the CPU for, in milliseconds.
-     * @hide
-     */
-    @Override // Binder call
-    public void cpuBoost(int duration) {
-        if (duration > 0 && duration <= MAX_CPU_BOOST_TIME) {
-            nativeCpuBoost(duration);
-        } else {
-            Log.e(TAG, "Invalid boost duration: " + duration);
-        }
-    }
-
     private void shutdownOrRebootInternal(final boolean shutdown, final boolean confirm,
             final String reason, boolean wait) {
         if (mHandler == null || !mSystemReady) {
@@ -1936,9 +1875,9 @@ public final class PowerManagerService extends IPowerManager.Stub
             public void run() {
                 synchronized (this) {
                     if (shutdown) {
-                        ShutdownThread.shutdown(getUiContext(), confirm);
+                        ShutdownThread.shutdown(mContext, confirm);
                     } else {
-                        ShutdownThread.reboot(getUiContext(), reason, confirm);
+                        ShutdownThread.reboot(mContext, reason, confirm);
                     }
                 }
             }
@@ -1991,13 +1930,6 @@ public final class PowerManagerService extends IPowerManager.Stub
         } catch (InterruptedException e) {
             Log.wtf(TAG, e);
         }
-    }
-
-    private Context getUiContext() {
-        if (mUiContext == null) {
-            mUiContext = ThemeUtils.createUiContext(mContext);
-        }
-        return mUiContext != null ? mUiContext : mContext;
     }
 
     /**
@@ -2309,6 +2241,7 @@ public final class PowerManagerService extends IPowerManager.Stub
                     + TimeUtils.formatUptime(mLastUserActivityTimeNoChangeLights));
             pw.println("  mDisplayReady=" + mDisplayReady);
             pw.println("  mHoldingWakeLockSuspendBlocker=" + mHoldingWakeLockSuspendBlocker);
+            pw.println("  mHoldingDisplaySuspendBlocker=" + mHoldingDisplaySuspendBlocker);
 
             pw.println();
             pw.println("Settings and Configuration:");
@@ -2609,6 +2542,9 @@ public final class PowerManagerService extends IPowerManager.Stub
             synchronized (this) {
                 mReferenceCount += 1;
                 if (mReferenceCount == 1) {
+                    if (DEBUG_SPEW) {
+                        Slog.d(TAG, "Acquiring suspend blocker \"" + mName + "\".");
+                    }
                     nativeAcquireSuspendBlocker(mName);
                 }
             }
@@ -2619,6 +2555,9 @@ public final class PowerManagerService extends IPowerManager.Stub
             synchronized (this) {
                 mReferenceCount -= 1;
                 if (mReferenceCount == 0) {
+                    if (DEBUG_SPEW) {
+                        Slog.d(TAG, "Releasing suspend blocker \"" + mName + "\".");
+                    }
                     nativeReleaseSuspendBlocker(mName);
                 } else if (mReferenceCount < 0) {
                     Log.wtf(TAG, "Suspend blocker \"" + mName

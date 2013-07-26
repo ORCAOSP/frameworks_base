@@ -89,7 +89,6 @@ public class WebSettingsClassic extends WebSettings {
     // HTML5 API flags
     private boolean         mAppCacheEnabled = false;
     private boolean         mDatabaseEnabled = false;
-    private boolean         mWebSocketsEnabled = false;
     private boolean         mDomStorageEnabled = false;
     private boolean         mWorkersEnabled = false;  // only affects V8.
     private boolean         mGeolocationEnabled = true;
@@ -126,7 +125,6 @@ public class WebSettingsClassic extends WebSettings {
     private boolean         mEnableSmoothTransition = false;
     private boolean         mForceUserScalable = false;
     private boolean         mPasswordEchoEnabled = true;
-    private boolean         mWebGLEnabled = true;
 
     // AutoFill Profile data
     public static class AutoFillProfile {
@@ -649,10 +647,6 @@ public class WebSettingsClassic extends WebSettings {
     @Override
     public synchronized void setTextZoom(int textZoom) {
         if (mTextSize != textZoom) {
-            if (WebViewClassic.mLogEvent) {
-                EventLog.writeEvent(EventLogTags.BROWSER_TEXT_SIZE_CHANGE,
-                        mTextSize, textZoom);
-            }
             mTextSize = textZoom;
             postSync();
         }
@@ -822,6 +816,10 @@ public class WebSettingsClassic extends WebSettings {
      */
     @Override
     public synchronized void setLayoutAlgorithm(LayoutAlgorithm l) {
+        if (l == LayoutAlgorithm.TEXT_AUTOSIZING) {
+            throw new IllegalArgumentException(
+                    "WebViewClassic does not support TEXT_AUTOSIZING layout mode");
+        }
         // XXX: This will only be affective if libwebcore was built with
         // ANDROID_LAYOUT defined.
         if (mLayoutAlgorithm != l) {
@@ -1255,7 +1253,7 @@ public class WebSettingsClassic extends WebSettings {
     @Override
     public synchronized void setAppCachePath(String path) {
         // We test for a valid path and for repeated setting on the native
-        // side, but we can avoid syncing in some simple cases.
+        // side, but we can avoid syncing in some simple cases. 
         if (mAppCachePath == null && path != null && !path.isEmpty()) {
             mAppCachePath = path;
             postSync();
@@ -1280,17 +1278,6 @@ public class WebSettingsClassic extends WebSettings {
     public synchronized void setDatabaseEnabled(boolean flag) {
        if (mDatabaseEnabled != flag) {
            mDatabaseEnabled = flag;
-           postSync();
-       }
-    }
-
-    /**
-     * @see android.webkit.WebSettings#setWebSocketsEnabled(boolean)
-     */
-    @Override
-    public synchronized void setWebSocketsEnabled(boolean flag) {
-       if (mWebSocketsEnabled != flag) {
-           mWebSocketsEnabled = flag;
            postSync();
        }
     }
@@ -1328,14 +1315,6 @@ public class WebSettingsClassic extends WebSettings {
     @Override
     public synchronized boolean getDatabaseEnabled() {
         return mDatabaseEnabled;
-    }
-
-    /**
-     * @see android.webkit.WebSettings#getWebSocketsEnabled()
-     */
-    @Override
-    public synchronized boolean getWebSocketsEnabled() {
-        return mWebSocketsEnabled;
     }
 
     /**
@@ -1651,24 +1630,6 @@ public class WebSettingsClassic extends WebSettings {
     }
 
     /**
-     * @hide
-     */
-    public synchronized boolean isWebGLAvailable() {
-        return nativeIsWebGLAvailable();
-    }
-
-    /**
-     * Sets whether WebGL is enabled.
-     * @param flag Set to true to enable WebGL.
-     */
-    public synchronized void setWebGLEnabled(boolean flag) {
-        if (mWebGLEnabled != flag) {
-            mWebGLEnabled = flag;
-            postSync();
-        }
-    }
-
-    /**
      * Sets whether viewport metatag can disable zooming.
      * @param flag Whether or not to forceably enable user scalable.
      */
@@ -1780,5 +1741,4 @@ public class WebSettingsClassic extends WebSettings {
 
     // Synchronize the native and java settings.
     private native void nativeSync(int nativeFrame);
-    private native boolean nativeIsWebGLAvailable();
 }

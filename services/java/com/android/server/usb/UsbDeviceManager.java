@@ -149,13 +149,6 @@ public class UsbDeviceManager {
         }
     };
 
-    // Dummy constructor to use when extending class
-    public UsbDeviceManager() {
-        mContext = null;
-        mContentResolver = null;
-        mHasUsbAccessory = false;
-    }
-
     public UsbDeviceManager(Context context) {
         mContext = context;
         mContentResolver = context.getContentResolver();
@@ -176,7 +169,9 @@ public class UsbDeviceManager {
             startAccessoryMode();
         }
 
-        if ("1".equals(SystemProperties.get("ro.adb.secure"))) {
+        boolean secureAdbEnabled = SystemProperties.getBoolean("ro.adb.secure", false);
+        boolean dataEncrypted = "1".equals(SystemProperties.get("vold.decrypt"));
+        if (secureAdbEnabled && !dataEncrypted) {
             mDebuggingManager = new UsbDebuggingManager(context);
         }
     }
@@ -199,25 +194,13 @@ public class UsbDeviceManager {
         mNotificationManager = (NotificationManager)
                 mContext.getSystemService(Context.NOTIFICATION_SERVICE);
 
-        // We do not show the USB notification if the primary volume supports mass storage, unless
-        // persist.sys.usb.config is set to mtp,adb. This will allow the USB notification to show
-        // on devices with mtp as default and mass storage enabled on primary, so the user can choose
-        // between mtp, ptp, and mass storage. The legacy mass storage UI will be used otherwise.
+        // We do not show the USB notification if the primary volume supports mass storage.
+        // The legacy mass storage UI will be used instead.
         boolean massStorageSupported = false;
         final StorageManager storageManager = StorageManager.from(mContext);
         final StorageVolume primary = storageManager.getPrimaryVolume();
-
-        if (Settings.Secure.getInt(mContentResolver, Settings.Secure.USB_MASS_STORAGE_ENABLED, 0 ) == 1 ) {
-                massStorageSupported = primary != null && primary.allowMassStorage();
-        } else {
-                massStorageSupported = false;
-        }
-
-        if ("mtp,adb".equals(SystemProperties.get("persist.sys.usb.config"))) {
-            mUseUsbNotification = true;
-        } else {
-            mUseUsbNotification = !massStorageSupported;
-        }
+        massStorageSupported = primary != null && primary.allowMassStorage();
+        mUseUsbNotification = !massStorageSupported;
 
         // make sure the ADB_ENABLED setting value matches the current state
         Settings.Global.putInt(mContentResolver, Settings.Global.ADB_ENABLED, mAdbEnabled ? 1 : 0);
@@ -391,6 +374,10 @@ public class UsbDeviceManager {
                             }
                         }
                 );
+
+                mContentResolver.registerContentObserver(
+                        Settings.Secure.getUriFor(Settings.Secure.ADB_PORT),
+                                false, new AdbSettingsObserver());
 
                 // Watch for USB configuration changes
                 mUEventObserver.startObserving(USB_STATE_MATCH);
@@ -889,6 +876,15 @@ public class UsbDeviceManager {
     public void denyUsbDebugging() {
         if (mDebuggingManager != null) {
             mDebuggingManager.denyUsbDebugging();
+        }
+    }
+
+    public void clearUsbDebuggingKeys() {
+        if (mDebuggingManager != null) {
+            mDebuggingManager.clearUsbDebuggingKeys();
+        } else {
+            throw new RuntimeException("Cannot clear Usb Debugging keys, "
+                        + "UsbDebuggingManager not enabled");
         }
     }
 

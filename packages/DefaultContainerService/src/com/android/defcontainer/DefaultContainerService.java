@@ -16,16 +16,12 @@
 
 package com.android.defcontainer;
 
-import com.android.internal.app.IMediaContainerService;
-import com.android.internal.content.NativeLibraryHelper;
-import com.android.internal.content.PackageHelper;
-
 import android.app.IntentService;
 import android.content.Intent;
-import android.content.pm.MacAuthenticatedInputStream;
 import android.content.pm.ContainerEncryptionParams;
 import android.content.pm.IPackageManager;
 import android.content.pm.LimitedLengthInputStream;
+import android.content.pm.MacAuthenticatedInputStream;
 import android.content.pm.PackageCleanItem;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInfoLite;
@@ -38,15 +34,20 @@ import android.os.Environment;
 import android.os.Environment.UserEnvironment;
 import android.os.FileUtils;
 import android.os.IBinder;
-import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.StatFs;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.Slog;
+
+import com.android.internal.app.IMediaContainerService;
+import com.android.internal.content.NativeLibraryHelper;
+import com.android.internal.content.PackageHelper;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -229,46 +230,13 @@ public class DefaultContainerService extends IntentService {
         public long calculateDirectorySize(String path) throws RemoteException {
             Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-            final File directory = new File(path);
-            if (directory.exists() && directory.isDirectory()) {
-                return MeasurementUtils.measureDirectory(path);
+            final File dir = Environment.maybeTranslateEmulatedPathToInternal(new File(path));
+            if (dir.exists() && dir.isDirectory()) {
+                final String targetPath = dir.getAbsolutePath();
+                return MeasurementUtils.measureDirectory(targetPath);
             } else {
                 return 0L;
             }
-        }
-
-        /**
-         * List content of the directory and return as marshalled Parcel.
-         * Used for calculating misc size in Settings -> Storage
-         */
-        @Override
-        public byte[] listDirectory(String path) throws RemoteException {
-            Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-
-            final File directory = new File(path);
-            final File[] files = directory.listFiles();
-            final Parcel out = Parcel.obtain();
-
-            if (files == null) {
-                out.writeInt(0);
-            }
-            else {
-                out.writeInt(files.length);
-                for (final File file : files) {
-                    out.writeString(file.getAbsolutePath());
-                    out.writeString(file.getName());
-                    out.writeInt(file.isDirectory() ? 1 : 0);
-                    if (file.isFile()) {
-                        out.writeInt(1);
-                        out.writeLong(file.length());
-                    }
-                    else {
-                        out.writeInt(0);
-                    }
-                }
-            }
-
-            return out.marshall();
         }
 
         @Override
@@ -292,17 +260,6 @@ public class DefaultContainerService extends IntentService {
             final File directory = new File(path);
             if (directory.exists() && directory.isDirectory()) {
                 eraseFiles(directory);
-            }
-        }
-
-        // Same as clearDirectory, but also work for files
-        @Override
-        public void deleteFile(String path) throws RemoteException {
-            Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-
-            final File file = new File(path);
-            if (file.exists()) {
-                eraseFiles(file);
             }
         }
 

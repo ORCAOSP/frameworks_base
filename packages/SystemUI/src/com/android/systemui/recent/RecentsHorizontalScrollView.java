@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2011 The Android Open Source Project
- * Copyright (C) 2012 ParanoidAndroid Project
+ * This code has been modified. Portions copyright (C) 2012, ParanoidAndroid Project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ public class RecentsHorizontalScrollView extends HorizontalScrollView
     private RecentsScrollViewPerformanceHelper mPerformanceHelper;
     private HashSet<View> mRecycledViews;
     private int mNumItemsInOneScreenful;
+    private Handler mHandler;
 
     public RecentsHorizontalScrollView(Context context, AttributeSet attrs) {
         super(context, attrs, 0);
@@ -62,6 +63,7 @@ public class RecentsHorizontalScrollView extends HorizontalScrollView
         mSwipeHelper = new SwipeHelper(SwipeHelper.Y, this, densityScale, pagingTouchSlop);
         mPerformanceHelper = RecentsScrollViewPerformanceHelper.create(context, attrs, this, false);
         mRecycledViews = new HashSet<View>();
+        mHandler = new Handler();
     }
 
     public void setMinSwipeAlpha(float minAlpha) {
@@ -99,6 +101,7 @@ public class RecentsHorizontalScrollView extends HorizontalScrollView
         setLayoutTransition(null);
 
         mLinearLayout.removeAllViews();
+
         Iterator<View> recycledViews = mRecycledViews.iterator();
         for (int i = 0; i < mAdapter.getCount(); i++) {
             View old = null;
@@ -154,6 +157,7 @@ public class RecentsHorizontalScrollView extends HorizontalScrollView
             final View appTitle = view.findViewById(R.id.app_label);
             appTitle.setContentDescription(" ");
             appTitle.setOnTouchListener(noOpListener);
+
             mLinearLayout.addView(view);
         }
         setLayoutTransition(transitioner);
@@ -181,16 +185,34 @@ public class RecentsHorizontalScrollView extends HorizontalScrollView
     @Override
     public void removeAllViewsInLayout() {
         smoothScrollTo(0, 0);
-        int count = mLinearLayout.getChildCount();
-        for (int i = 0; i < count; i++) {
-            final View child = mLinearLayout.getChildAt(i);
-            postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    dismissChild(child);
+        Thread clearAll = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int count = mLinearLayout.getChildCount();
+                // if we have more than one app, don't kill the current one
+                if(count > 1) count--;
+                View[] refView = new View[count];
+                for (int i = 0; i < count; i++) {
+                    refView[i] = mLinearLayout.getChildAt(i);
                 }
-            }, i * 150);
-        }
+                for (int i = 0; i < count; i++) {
+                    final View child = refView[i];
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            dismissChild(child);
+                        }
+                    });
+                    try {
+                        Thread.sleep(150);
+                    } catch (InterruptedException e) {
+                        // User will see the app fading instantly after the previous
+                        // one. This will probably never happen
+                    }
+                }
+            }
+        });
+        clearAll.start();
     }
 
     public boolean onInterceptTouchEvent(MotionEvent ev) {
@@ -213,7 +235,7 @@ public class RecentsHorizontalScrollView extends HorizontalScrollView
         mSwipeHelper.dismissChild(v, 0);
     }
 
-    public void onChildDismissed(View v, boolean fromUser) {
+    public void onChildDismissed(View v) {
         addToRecycledViews(v);
         mLinearLayout.removeView(v);
         mCallback.handleSwipe(v);
@@ -273,7 +295,7 @@ public class RecentsHorizontalScrollView extends HorizontalScrollView
             mPerformanceHelper.drawCallback(canvas,
                     left, right, top, bottom, mScrollX, mScrollY,
                     0, 0,
-                    getLeftFadingEdgeStrength(), getRightFadingEdgeStrength());
+                    getLeftFadingEdgeStrength(), getRightFadingEdgeStrength(), mPaddingTop);
         }
     }
 

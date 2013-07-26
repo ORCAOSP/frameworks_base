@@ -16,6 +16,7 @@
 
 package android.media;
 
+import android.app.ActivityThread;
 import android.hardware.Camera;
 import android.os.Handler;
 import android.os.Looper;
@@ -105,10 +106,11 @@ public class MediaRecorder
             mEventHandler = null;
         }
 
+        String packageName = ActivityThread.currentPackageName();
         /* Native setup requires a weak reference to our object.
          * It's easier to create it here than in C++.
          */
-        native_setup(new WeakReference<MediaRecorder>(this));
+        native_setup(new WeakReference<MediaRecorder>(this), packageName);
     }
 
     /**
@@ -177,12 +179,6 @@ public class MediaRecorder
          *  is applied.
          */
         public static final int VOICE_COMMUNICATION = 7;
-
-        /**
-         * @hide
-         * Audio source for remote submix.
-         */
-        public static final int REMOTE_SUBMIX_SOURCE = 8;
     }
 
     /**
@@ -241,13 +237,6 @@ public class MediaRecorder
 
         /** @hide H.264/AAC data encapsulated in MPEG2/TS */
         public static final int OUTPUT_FORMAT_MPEG2TS = 8;
-
-        /** @hide QCP file format */
-        public static final int QCP = 9;
-        /** @hide 3GPP2 media file format*/
-        public static final int THREE_GPP2 = 10;
-        /** @hide WAVE media file format*/
-        public static final int WAVE = 11;
     };
 
     /**
@@ -270,12 +259,6 @@ public class MediaRecorder
         public static final int HE_AAC = 4;
         /** Enhanced Low Delay AAC (AAC-ELD) audio codec */
         public static final int AAC_ELD = 5;
-        /** @hide EVRC audio codec */
-        public static final int EVRC = 6;
-        /** @hide QCELP audio codec */
-        public static final int QCELP =7;
-        /** @hide Linear PCM audio codec */
-        public static final int LPCM =8;
     }
 
     /**
@@ -311,10 +294,7 @@ public class MediaRecorder
      * @see android.media.MediaRecorder.AudioSource
      */
     public static final int getAudioSourceMax() {
-        // FIXME disable selection of the remote submxi source selection once test code
-        //       doesn't rely on it
-        return AudioSource.REMOTE_SUBMIX_SOURCE;
-        //return AudioSource.VOICE_COMMUNICATION;
+        return AudioSource.VOICE_COMMUNICATION;
     }
 
     /**
@@ -999,7 +979,8 @@ public class MediaRecorder
 
     private static native final void native_init();
 
-    private native final void native_setup(Object mediarecorder_this) throws IllegalStateException;
+    private native final void native_setup(Object mediarecorder_this,
+            String clientName) throws IllegalStateException;
 
     private native final void native_finalize();
 

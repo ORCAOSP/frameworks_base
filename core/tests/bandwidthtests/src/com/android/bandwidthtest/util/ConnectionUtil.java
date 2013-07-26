@@ -588,7 +588,7 @@ public class ConnectionUtil {
                 return true;
             } else {
                 // Start an active scan
-                mWifiManager.startScanActive();
+                mWifiManager.startScan();
                 mScanResultIsAvailable = false;
                 long startTime = System.currentTimeMillis();
                 while (!mScanResultIsAvailable) {
@@ -685,7 +685,7 @@ public class ConnectionUtil {
      */
     public void setAirplaneMode(Context context, boolean enableAM) {
         //set the airplane mode
-        Settings.Global.putInt(context.getContentResolver(), Settings.Global.AIRPLANE_MODE_ON,
+        Settings.System.putInt(context.getContentResolver(), Settings.System.AIRPLANE_MODE_ON,
                 enableAM ? 1 : 0);
         // Post the intent
         Intent intent = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);

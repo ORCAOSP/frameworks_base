@@ -23,7 +23,6 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.os.Vibrator;
-import android.provider.Settings;
 import android.util.Slog;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -77,7 +76,6 @@ public class ExpandHelper implements Gefingerpoken, OnClickListener {
     private int mExpansionStyle = NONE;
     private boolean mWatchingForPull;
     private boolean mHasPopped;
-    private boolean mVibrate;
     private View mEventSource;
     private View mCurrView;
     private View mCurrViewTopGlow;
@@ -198,8 +196,6 @@ public class ExpandHelper implements Gefingerpoken, OnClickListener {
         mPopLimit = mContext.getResources().getDimension(R.dimen.blinds_pop_threshold);
         mPopDuration = mContext.getResources().getInteger(R.integer.blinds_pop_duration_ms);
         mPullGestureMinXSpan = mContext.getResources().getDimension(R.dimen.pull_span_min);
-        mVibrate = Settings.System.getBoolean(mContext.getContentResolver(),
-                Settings.System.VIBRATE_NOTIF_EXPAND, true);
 
         AnimatorListenerAdapter glowVisibilityController = new AnimatorListenerAdapter() {
             @Override
@@ -403,7 +399,6 @@ public class ExpandHelper implements Gefingerpoken, OnClickListener {
                         if (underFocus != null) {
                             startExpanding(underFocus, BLINDS);
                             mInitialTouchY = mLastMotionY;
-                            mHasPopped = false;
                         }
                     }
                 }
@@ -418,6 +413,7 @@ public class ExpandHelper implements Gefingerpoken, OnClickListener {
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
                 if (DEBUG) Slog.d(TAG, "up/cancel");
+                mHasPopped = false;
                 finishExpanding(false);
                 clearView();
                 break;
@@ -454,9 +450,7 @@ public class ExpandHelper implements Gefingerpoken, OnClickListener {
                     final float pull = Math.abs(ev.getY() - mInitialTouchY);
                     if (mHasPopped || pull > mPopLimit) {
                         if (!mHasPopped) {
-                            if (mVibrate) {
-                                vibrate(mPopDuration);
-                            }
+                            vibrate(mPopDuration);
                             mHasPopped = true;
                         }
                     }
@@ -475,7 +469,6 @@ public class ExpandHelper implements Gefingerpoken, OnClickListener {
                         finishExpanding(false); // @@@ needed?
                         startExpanding(underFocus, BLINDS);
                         mInitialTouchY = y;
-                        mHasPopped = false;
                     }
                     return true;
                 }
@@ -498,6 +491,7 @@ public class ExpandHelper implements Gefingerpoken, OnClickListener {
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
                 if (DEBUG) Slog.d(TAG, "up/cancel");
+                mHasPopped = false;
                 finishExpanding(false);
                 clearView();
                 break;
@@ -513,6 +507,7 @@ public class ExpandHelper implements Gefingerpoken, OnClickListener {
         mExpanding = true;
         if (DEBUG) Slog.d(TAG, "scale type " + expandType + " beginning on view: " + v);
         mCallback.setUserLockedChild(v, true);
+        setGlow(0f);
         setView(v);
         setGlow(GLOW_BASE);
         mScaler.setView(v);

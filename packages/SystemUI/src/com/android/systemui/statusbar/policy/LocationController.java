@@ -25,21 +25,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.ContentObserver;
 import android.location.LocationManager;
-import android.os.Handler;
 import android.os.UserHandle;
 import android.provider.Settings;
-import android.util.Slog;
-import android.view.View;
-import android.widget.ImageView;
 
 // private NM API
 import android.app.INotificationManager;
-import com.android.internal.statusbar.StatusBarNotification;
 
 import com.android.systemui.R;
-import com.android.systemui.statusbar.policy.BatteryController.BatteryStateChangeCallback;
 
 public class LocationController extends BroadcastReceiver {
     private static final String TAG = "StatusBar.LocationController";
@@ -53,10 +46,8 @@ public class LocationController extends BroadcastReceiver {
     private ArrayList<LocationGpsStateChangeCallback> mChangeCallbacks =
             new ArrayList<LocationGpsStateChangeCallback>();
 
-    private ContentObserver mGpsSettingObserver;
-
     public interface LocationGpsStateChangeCallback {
-        public void onLocationGpsStateChanged(boolean inUse, boolean hasFix, String description);
+        public void onLocationGpsStateChanged(boolean inUse, String description);
     }
 
     public LocationController(Context context) {
@@ -70,19 +61,6 @@ public class LocationController extends BroadcastReceiver {
         NotificationManager nm = (NotificationManager)context.getSystemService(
                 Context.NOTIFICATION_SERVICE);
         mNotificationService = nm.getService();
-
-        mGpsSettingObserver = new ContentObserver(new Handler()) {
-            @Override
-            public void onChange(boolean selfChange) {
-                boolean visible = Settings.Secure.isLocationProviderEnabled(
-                        mContext.getContentResolver(), LocationManager.GPS_PROVIDER);
-                for (LocationGpsStateChangeCallback cb : mChangeCallbacks) {
-                    cb.onLocationGpsStateChanged(visible, false, null);
-                }
-            }
-        };
-        mContext.getContentResolver().registerContentObserver(
-                Settings.System.getUriFor(Settings.Secure.LOCATION_PROVIDERS_ALLOWED), false, mGpsSettingObserver);
     }
 
     public void addStateChangedCallback(LocationGpsStateChangeCallback cb) {
@@ -94,7 +72,7 @@ public class LocationController extends BroadcastReceiver {
         final String action = intent.getAction();
         final boolean enabled = intent.getBooleanExtra(LocationManager.EXTRA_GPS_ENABLED, false);
 
-        boolean visible, hasFix;;
+        boolean visible;
         int iconId, textResId;
 
         if (action.equals(LocationManager.GPS_FIX_CHANGE_ACTION) && enabled) {
@@ -102,20 +80,17 @@ public class LocationController extends BroadcastReceiver {
             iconId = com.android.internal.R.drawable.stat_sys_gps_on;
             textResId = R.string.gps_notification_found_text;
             visible = true;
-            hasFix = true;
         } else if (action.equals(LocationManager.GPS_ENABLED_CHANGE_ACTION) && !enabled) {
             // GPS is off
             visible = false;
-            hasFix = false;
             iconId = textResId = 0;
         } else {
             // GPS is on, but not receiving fixes
             iconId = R.drawable.stat_sys_gps_acquiring_anim;
             textResId = R.string.gps_notification_searching_text;
             visible = true;
-            hasFix = false;
         }
-
+        
         try {
             if (visible) {
                 Intent gpsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
@@ -135,12 +110,12 @@ public class LocationController extends BroadcastReceiver {
                 // Notification.Builder will helpfully fill these out for you no matter what you do
                 n.tickerView = null;
                 n.tickerText = null;
-
+                
                 n.priority = Notification.PRIORITY_HIGH;
 
                 int[] idOut = new int[1];
                 mNotificationService.enqueueNotificationWithTag(
-                        mContext.getPackageName(),
+                        mContext.getPackageName(), mContext.getBasePackageName(),
                         null, 
                         GPS_NOTIFICATION_ID, 
                         n,
@@ -148,7 +123,7 @@ public class LocationController extends BroadcastReceiver {
                         UserHandle.USER_ALL);
 
                 for (LocationGpsStateChangeCallback cb : mChangeCallbacks) {
-                    cb.onLocationGpsStateChanged(true, hasFix, text);
+                    cb.onLocationGpsStateChanged(true, text);
                 }
             } else {
                 mNotificationService.cancelNotificationWithTag(
@@ -156,7 +131,7 @@ public class LocationController extends BroadcastReceiver {
                         GPS_NOTIFICATION_ID, UserHandle.USER_ALL);
 
                 for (LocationGpsStateChangeCallback cb : mChangeCallbacks) {
-                    cb.onLocationGpsStateChanged(false, false, null);
+                    cb.onLocationGpsStateChanged(false, null);
                 }
             }
         } catch (android.os.RemoteException ex) {

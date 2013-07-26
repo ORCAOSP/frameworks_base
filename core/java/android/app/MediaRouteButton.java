@@ -123,13 +123,13 @@ public class MediaRouteButton extends View {
 
         if (mToggleMode) {
             if (mRemoteActive) {
-                mRouter.selectRouteInt(mRouteTypes, mRouter.getSystemAudioRoute());
+                mRouter.selectRouteInt(mRouteTypes, mRouter.getDefaultRoute());
             } else {
                 final int N = mRouter.getRouteCount();
                 for (int i = 0; i < N; i++) {
                     final RouteInfo route = mRouter.getRouteAt(i);
                     if ((route.getSupportedTypes() & mRouteTypes) != 0 &&
-                            route != mRouter.getSystemAudioRoute()) {
+                            route != mRouter.getDefaultRoute()) {
                         mRouter.selectRouteInt(mRouteTypes, route);
                     }
                 }
@@ -175,7 +175,7 @@ public class MediaRouteButton extends View {
         Toast cheatSheet = Toast.makeText(context, contentDesc, Toast.LENGTH_SHORT);
         if (midy < displayFrame.height()) {
             // Show along the top; follow action buttons
-            cheatSheet.setGravity(Gravity.TOP | Gravity.RIGHT,
+            cheatSheet.setGravity(Gravity.TOP | Gravity.END,
                     screenWidth - screenPos[0] - width / 2, height);
         } else {
             // Show along the bottom center
@@ -216,7 +216,7 @@ public class MediaRouteButton extends View {
 
     void updateRemoteIndicator() {
         final RouteInfo selected = mRouter.getSelectedRoute(mRouteTypes);
-        final boolean isRemote = selected != mRouter.getSystemAudioRoute();
+        final boolean isRemote = selected != mRouter.getDefaultRoute();
         final boolean isConnecting = selected != null &&
                 selected.getStatusCode() == RouteInfo.STATUS_CONNECTING;
 

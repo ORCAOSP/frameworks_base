@@ -17,7 +17,6 @@
 package com.android.systemui.statusbar;
 
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.KeyguardManager;
 import android.app.SearchManager;
@@ -25,7 +24,6 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.content.pm.ResolveInfo;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -46,19 +44,13 @@ import android.view.ViewGroup;
 import android.view.Surface;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
-import com.android.systemui.aokp.AwesomeAction;
 import com.android.systemui.R;
 import com.android.systemui.statusbar.phone.PanelBar;
 import com.android.systemui.statusbar.tablet.StatusBarPanel;
 import com.android.systemui.statusbar.PieControl.OnNavButtonPressedListener;
 
-import java.util.List;
-
 public class PieControlPanel extends FrameLayout implements StatusBarPanel, OnNavButtonPressedListener {
-
-    private final static String SysUIPackage = "com.android.systemui";
 
     private Handler mHandler;
     private boolean mShowing;
@@ -301,17 +293,10 @@ public class PieControlPanel extends FrameLayout implements StatusBarPanel, OnNa
             injectKeyDelayed(KeyEvent.KEYCODE_MENU);
         } else if (buttonName.equals(PieControl.RECENT_BUTTON)) {
             mStatusBar.toggleRecentApps();
+        } else if (buttonName.equals(PieControl.CLEAR_ALL_BUTTON)) {
+            mStatusBar.clearRecentApps();
         } else if (buttonName.equals(PieControl.SEARCH_BUTTON)) {
             launchAssistAction();
-        } else if (buttonName.equals(PieControl.LAST_APP_BUTTON)) {
-            toggleLastApp();
-        } else if (buttonName.equals(PieControl.KILL_TASK_BUTTON)) {
-            KillTask mKillTask = new KillTask(mContext);
-            mHandler.post(mKillTask);
-        } else if (buttonName.equals(PieControl.APP_WINDOW_BUTTON)) {
-            Intent appWindow = new Intent();
-            appWindow.setAction("com.android.systemui.ACTION_SHOW_APP_WINDOW");
-            mContext.sendBroadcast(appWindow);
         }
     }
 
@@ -335,68 +320,15 @@ public class PieControlPanel extends FrameLayout implements StatusBarPanel, OnNa
         }
     }
 
-    private void toggleLastApp() {
-        int lastAppId = 0;
-        int looper = 1;
-        String packageName;
-        final Intent intent = new Intent(Intent.ACTION_MAIN);
-        final ActivityManager am = (ActivityManager) mContext
-                .getSystemService(Activity.ACTIVITY_SERVICE);
-        String defaultHomePackage = "com.android.launcher";
-        intent.addCategory(Intent.CATEGORY_HOME);
-        final ResolveInfo res = mContext.getPackageManager().resolveActivity(intent, 0);
-        if (res.activityInfo != null && !res.activityInfo.packageName.equals("android")) {
-            defaultHomePackage = res.activityInfo.packageName;
-        }
-        List <ActivityManager.RunningTaskInfo> tasks = am.getRunningTasks(5);
-        // lets get enough tasks to find something to switch to
-        // Note, we'll only get as many as the system currently has - up to 5
-        while ((lastAppId == 0) && (looper < tasks.size())) {
-            packageName = tasks.get(looper).topActivity.getPackageName();
-            if (!packageName.equals(defaultHomePackage) && !packageName.equals("com.android.systemui")) {
-                lastAppId = tasks.get(looper).id;
-            }
-            looper++;
-        }
-        if (lastAppId != 0) {
-            am.moveTaskToFront(lastAppId, am.MOVE_TASK_NO_USER_ACTION);
-        }
-    }
-
-    public static class KillTask implements Runnable {
-         private Context mContext;
-         public KillTask(Context context) {
-             this.mContext = context;
-         }
-         public void run() {
-            final Intent intent = new Intent(Intent.ACTION_MAIN);
-            final ActivityManager am = (ActivityManager) mContext
-                    .getSystemService(Activity.ACTIVITY_SERVICE);
-            String defaultHomePackage = "com.android.launcher";
-            intent.addCategory(Intent.CATEGORY_HOME);
-            final ResolveInfo res = mContext.getPackageManager().resolveActivity(intent, 0);
-            if (res.activityInfo != null && !res.activityInfo.packageName.equals("android")) {
-                defaultHomePackage = res.activityInfo.packageName;
-            }
-            String packageName = am.getRunningTasks(1).get(0).topActivity.getPackageName();
-            if (SysUIPackage.equals(packageName))
-                return; // don't kill SystemUI
-            if (!defaultHomePackage.equals(packageName)) {
-                am.forceStopPackage(packageName);
-                Toast.makeText(mContext, R.string.app_killed_message, Toast.LENGTH_SHORT).show();
-            }
-        }
-     }
-
     public void injectKeyDelayed(int keycode){
-    	mInjectKeycode = keycode;
+        mInjectKeycode = keycode;
         mDownTime = SystemClock.uptimeMillis();
-    	mHandler.removeCallbacks(onInjectKeyDelayed);
-      	mHandler.postDelayed(onInjectKeyDelayed, 100);
+        mHandler.removeCallbacks(onInjectKeyDelayed);
+        mHandler.postDelayed(onInjectKeyDelayed, 100);
     }
 
     final Runnable onInjectKeyDelayed = new Runnable() {
-    	public void run() {
+        public void run() {
             final long eventTime = SystemClock.uptimeMillis();
             InputManager.getInstance().injectInputEvent(
                     new KeyEvent(mDownTime, eventTime - 100, KeyEvent.ACTION_DOWN, mInjectKeycode, 0),
@@ -404,7 +336,7 @@ public class PieControlPanel extends FrameLayout implements StatusBarPanel, OnNa
             InputManager.getInstance().injectInputEvent(
                     new KeyEvent(mDownTime, eventTime - 50, KeyEvent.ACTION_UP, mInjectKeycode, 0),
                     InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
-    	}
+        }
     };
 
     public boolean getKeyguardStatus() {

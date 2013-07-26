@@ -149,6 +149,7 @@ static jobject android_emoji_EmojiFactory_newAvailableInstance(
   }
 
   jstring jname = env->NewStringUTF(factory->Name());
+
   if (NULL == jname) {
     return NULL;
   }

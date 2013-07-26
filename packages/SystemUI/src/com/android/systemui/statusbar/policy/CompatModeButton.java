@@ -18,11 +18,7 @@ package com.android.systemui.statusbar.policy;
 
 import android.app.ActivityManager;
 import android.content.Context;
-import android.content.ContentResolver;
 import android.content.res.TypedArray;
-import android.database.ContentObserver;
-import android.provider.Settings;
-import android.os.Handler;
 import android.os.RemoteException;
 import android.util.AttributeSet;
 import android.util.Slog;
@@ -35,14 +31,7 @@ public class CompatModeButton extends ImageView {
     private static final boolean DEBUG = false;
     private static final String TAG = "StatusBar.CompatModeButton";
 
-    private boolean mHideExtras = false;
-    private boolean mAttached = false;
-
-    private ContentResolver resolver;
-
     private ActivityManager mAM;
-
-    private SettingsObserver mSettingsObserver;
 
     public CompatModeButton(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
@@ -50,36 +39,12 @@ public class CompatModeButton extends ImageView {
 
     public CompatModeButton(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs);
-        resolver = context.getContentResolver();
 
         setClickable(true);
 
         mAM = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
 
-        updateSettings();
         refresh();
-    }
-
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-
-        if (!mAttached) {
-            mAttached = true;
-            mSettingsObserver = new SettingsObserver(new Handler());
-            mSettingsObserver.observe();
-            updateSettings();
-        }
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-
-        if (mAttached) {
-            resolver.unregisterContentObserver(mSettingsObserver);
-            mAttached = false;
-        }
     }
 
     public void refresh() {
@@ -89,29 +54,8 @@ public class CompatModeButton extends ImageView {
             return;
         }
         final boolean vis = (mode != ActivityManager.COMPAT_MODE_NEVER
-                          && mode != ActivityManager.COMPAT_MODE_ALWAYS && !mHideExtras);
+                          && mode != ActivityManager.COMPAT_MODE_ALWAYS);
         if (DEBUG) Slog.d(TAG, "compat mode is " + mode + "; icon will " + (vis ? "show" : "hide"));
-        setVisibility(vis ? View.VISIBLE : View.GONE);
-    }
-
-    class SettingsObserver extends ContentObserver {
-        SettingsObserver(Handler handler) {
-            super(handler);
-        }
-
-        void observe() {
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.HIDE_EXTRAS_SYSTEM_BAR), false, this);
-        }
-
-        @Override
-        public void onChange(boolean selfChange) {
-            updateSettings();
-            refresh();
-        }
-    }
-
-    public void updateSettings() {
-        mHideExtras = Settings.System.getBoolean(resolver, Settings.System.HIDE_EXTRAS_SYSTEM_BAR, false);
+        setVisibility(View.GONE);
     }
 }

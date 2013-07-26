@@ -20,8 +20,6 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_label" msgid="7164937344850004466">"系统用户界面"</string>
-    <string name="permdesc_screenshot">捕获屏幕截图</string>
-    <string name="permlab_screenshot">允许应用捕获屏幕截图。这是系统用户界面的保护。</string>
     <string name="status_bar_clear_all_button" msgid="7774721344716731603">"清除"</string>
     <string name="status_bar_do_not_disturb_button" msgid="5812628897510997853">"请勿打扰"</string>
     <string name="status_bar_please_disturb_button" msgid="3345398298841572813">"显示通知"</string>
@@ -42,7 +40,7 @@
     <string name="invalid_charger" msgid="4549105996740522523">"不支持 USB 充电功能。"\n"只能使用随附的充电器充电。"</string>
     <string name="battery_low_why" msgid="7279169609518386372">"电量使用情况"</string>
     <string name="status_bar_settings_settings_button" msgid="3023889916699270224">"设置"</string>
-    <string name="status_bar_settings_wifi_button" msgid="1733928151698311923">"Wi-Fi"</string>
+    <string name="status_bar_settings_wifi_button" msgid="1733928151698311923">"WLAN"</string>
     <string name="status_bar_settings_airplane" msgid="4879879698500955300">"飞行模式"</string>
     <string name="status_bar_settings_auto_rotation" msgid="3790482541357798421">"自动旋转屏幕"</string>
     <string name="status_bar_settings_mute_label" msgid="554682549917429396">"静音"</string>
@@ -70,9 +68,9 @@
     <string name="screenshot_saving_ticker" msgid="7403652894056693515">"正在保存屏幕截图..."</string>
     <string name="screenshot_saving_title" msgid="8242282144535555697">"正在保存屏幕截图..."</string>
     <string name="screenshot_saving_text" msgid="2419718443411738818">"正在保存屏幕截图。"</string>
-    <string name="screenshot_saved_title" msgid="6461865960961414961">"已捕获屏幕截图。"</string>
+    <string name="screenshot_saved_title" msgid="6461865960961414961">"已抓取屏幕截图。"</string>
     <string name="screenshot_saved_text" msgid="1152839647677558815">"触摸可查看您的屏幕截图。"</string>
-    <string name="screenshot_failed_title" msgid="705781116746922771">"无法捕获屏幕截图。"</string>
+    <string name="screenshot_failed_title" msgid="705781116746922771">"无法抓取屏幕截图。"</string>
     <string name="screenshot_failed_text" msgid="8134011269572415402">"无法保存屏幕截图。存储设备可能正在使用中。"</string>
     <string name="usb_preference_title" msgid="6551050377388882787">"USB 文件传输选项"</string>
     <string name="use_mtp_button_title" msgid="4333504413563023626">"作为媒体播放器 (MTP) 装载"</string>
@@ -102,12 +100,12 @@
     <string name="accessibility_data_two_bars" msgid="6166018492360432091">"数据信号强度为两格。"</string>
     <string name="accessibility_data_three_bars" msgid="9167670452395038520">"数据信号强度为三格。"</string>
     <string name="accessibility_data_signal_full" msgid="2708384608124519369">"数据信号满格。"</string>
-    <string name="accessibility_wifi_off" msgid="3177380296697933627">"已关闭 Wi-Fi。"</string>
-    <string name="accessibility_no_wifi" msgid="1425476551827924474">"Wi-Fi 连接已断开。"</string>
-    <string name="accessibility_wifi_one_bar" msgid="7735893178010724377">"Wi-Fi 信号强度为一格。"</string>
-    <string name="accessibility_wifi_two_bars" msgid="4994274250497262434">"Wi-Fi 信号强度为两格。"</string>
-    <string name="accessibility_wifi_three_bars" msgid="3495755044276588384">"Wi-Fi 信号强度为三格。"</string>
-    <string name="accessibility_wifi_signal_full" msgid="6853561303586480376">"Wi-Fi 信号满格。"</string>
+    <string name="accessibility_wifi_off" msgid="3177380296697933627">"已关闭 WLAN。"</string>
+    <string name="accessibility_no_wifi" msgid="1425476551827924474">"WLAN 连接已断开。"</string>
+    <string name="accessibility_wifi_one_bar" msgid="7735893178010724377">"WLAN 信号强度为一格。"</string>
+    <string name="accessibility_wifi_two_bars" msgid="4994274250497262434">"WLAN 信号强度为两格。"</string>
+    <string name="accessibility_wifi_three_bars" msgid="3495755044276588384">"WLAN 信号强度为三格。"</string>
+    <string name="accessibility_wifi_signal_full" msgid="6853561303586480376">"WLAN 信号满格。"</string>
     <string name="accessibility_no_wimax" msgid="4329180129727630368">"无 WiMAX 信号。"</string>
     <string name="accessibility_wimax_one_bar" msgid="4170994299011863648">"WiMAX 信号强度为一格。"</string>
     <string name="accessibility_wimax_two_bars" msgid="9176236858336502288">"WiMAX 信号强度为两格。"</string>
@@ -129,10 +127,11 @@
     <string name="accessibility_data_connection_3g" msgid="8628562305003568260">"3G"</string>
     <string name="accessibility_data_connection_3.5g" msgid="8664845609981692001">"3.5G"</string>
     <string name="accessibility_data_connection_4g" msgid="7741000750630089612">"4G"</string>
+    <string name="accessibility_data_connection_lte" msgid="5413468808637540658">"LTE"</string>
     <string name="accessibility_data_connection_cdma" msgid="6132648193978823023">"CDMA"</string>
     <string name="accessibility_data_connection_roaming" msgid="5977362333466556094">"漫游中"</string>
     <string name="accessibility_data_connection_edge" msgid="4477457051631979278">"EDGE"</string>
-    <string name="accessibility_data_connection_wifi" msgid="2324496756590645221">"Wi-Fi"</string>
+    <string name="accessibility_data_connection_wifi" msgid="2324496756590645221">"WLAN"</string>
     <string name="accessibility_no_sim" msgid="8274017118472455155">"无 SIM 卡。"</string>
     <string name="accessibility_bluetooth_tether" msgid="4102784498140271969">"蓝牙共享网络。"</string>
     <string name="accessibility_airplane_mode" msgid="834748999790763092">"飞行模式。"</string>
@@ -166,7 +165,7 @@
     <string name="data_usage_disabled_dialog" msgid="3853117269051806280">"您已达到指定的数据流量上限。"\n\n"如果您重新启用数据，运营商可能会收取相应的费用。"</string>
     <string name="data_usage_disabled_dialog_enable" msgid="7729772039208664606">"重新启用数据连接"</string>
     <string name="status_bar_settings_signal_meter_disconnected" msgid="1940231521274147771">"未连接互联网"</string>
-    <string name="status_bar_settings_signal_meter_wifi_nossid" msgid="6557486452774597820">"Wi-Fi 已连接"</string>
+    <string name="status_bar_settings_signal_meter_wifi_nossid" msgid="6557486452774597820">"WLAN 已连接"</string>
     <string name="gps_notification_searching_text" msgid="8574247005642736060">"正在搜索 GPS"</string>
     <string name="gps_notification_found_text" msgid="4619274244146446464">"已通过 GPS 确定位置"</string>
     <string name="accessibility_clear_all" msgid="5235938559247164925">"清除所有通知。"</string>
@@ -197,105 +196,14 @@
     <string name="quick_settings_settings_label" msgid="5326556592578065401">"设置"</string>
     <string name="quick_settings_time_label" msgid="4635969182239736408">"时间"</string>
     <string name="quick_settings_user_label" msgid="5238995632130897840">"我"</string>
-    <string name="quick_settings_wifi_label" msgid="9135344704899546041">"Wi-Fi"</string>
+    <string name="quick_settings_wifi_label" msgid="9135344704899546041">"WLAN"</string>
     <string name="quick_settings_wifi_not_connected" msgid="7171904845345573431">"未连接"</string>
     <string name="quick_settings_wifi_no_network" msgid="2221993077220856376">"无网络"</string>
-    <string name="quick_settings_wifi_off_label" msgid="7558778100843885864">"Wi-Fi 已关闭"</string>
-    <string name="quick_settings_wifi_display_label" msgid="6893592964463624333">"Wi-Fi 显示设备"</string>
+    <string name="quick_settings_wifi_off_label" msgid="7558778100843885864">"WLAN 已关闭"</string>
+    <string name="quick_settings_wifi_display_label" msgid="6893592964463624333">"WLAN 显示"</string>
     <string name="quick_settings_wifi_display_no_connection_label" msgid="2355298740765736918">"无线显示"</string>
     <string name="quick_settings_brightness_dialog_title" msgid="8599674057673605368">"亮度"</string>
     <string name="quick_settings_brightness_dialog_auto_brightness_label" msgid="5064982743784071218">"自动"</string>
-    <string name="quick_settings_swagger">屌爆</string>
-    <string name="quick_settings_swaggersun">周日屌爆了</string>
-    <string name="quick_settings_fbgt">蛋疼</string>
-    <string name="quick_settings_recording">正在录制……</string>
-    <string name="quick_settings_recordingcap">录音已捕获</string>
-    <string name="quick_settings_playing">正在播放……</string>
-    <string name="quick_settings_quickrecord">快捷录音</string>
-    <string name="quick_settings_nofile">长按开始录音</string>
-    <string name="quick_settings_sleep">休眠</string>
-    <string name="quick_settings_reboot">重新启动</string>
-    <string name="quick_settings_reboot_message">您的设备正在重新启动</string>
-    <string name="quick_settings_stayawake_on">已保持唤醒</string>
-    <string name="quick_settings_stayawake_off">不保持唤醒</string>
     <string name="status_bar_help_title" msgid="1199237744086469217">"通知会显示在这里"</string>
     <string name="status_bar_help_text" msgid="7874607155052076323">"向下滑动可随时查看通知。"\n"再次向下滑动可使用系统控制功能。"</string>
-
-    <!--  AOKP 文本 -->
-
-    <!-- Target/Action Strings -->
-    <string name="shortcut_label">Bigfoot Actions</string>
-    <string name="action_home">主屏幕</string>
-    <string name="action_back">返回</string>
-    <string name="action_recents">近期任务</string>
-    <string name="action_screenshot">屏幕截图</string>
-    <string name="action_menu">菜单</string>
-    <string name="action_ime">输入法选择</string>
-    <string name="action_kill">结束进程</string>
-    <string name="action_power">电源</string>
-    <string name="action_search">搜索</string>
-    <string name="action_notifications">通知</string>
-    <string name="action_lastapp">上次运行程序</string>
-    <string name="action_none">空</string>
-
-    <string name="widgets">小部件</string>
-    <string name="toggle_navbar">导航栏 - 开关</string>
-    <string name="toggle_statusbar">状态栏 - 开关</string>
-    <string name="toggle_widgets">小部件 - 开关</string>
-    <string name="toggle_ring_vib">铃声/振动 - 开关</string>
-    <string name="toggle_ring_silent">铃声/静音 - 开关</string>
-    <string name="toggle_ring_vib_silent">铃声/振动/静音 - 开关</string>
-    <string name="app_killed_message">应用程序已结束</string>
-    <string name="recents_kill_all_button_text">全部结束</string>
-    <string name="screenshot_toast">在%1$d秒后截图</string>
-
-    <!--  Quick Settings -->
-    <string name="quick_settings_vibrate_on_label">振动已打开</string>
-    <string name="quick_settings_vibrate_off_label">振动已关闭</string>
-    <string name="quick_settings_silent_on_label">静音已打开</string>
-    <string name="quick_settings_silent_off_label">静音已关闭</string>
-    <string name="quick_settings_fcharge_on_label">快速充电已打开</string>
-    <string name="quick_settings_fcharge_off_label">快速充电已关闭</string>
-    <string name="quick_settings_torch_on_label">灯光已打开</string>
-    <string name="quick_settings_torch_off_label">灯光已关闭</string>
-    <string name="quick_settings_nfc_on_label">NFC已打开</string>
-    <string name="quick_settings_nfc_off_label">NFC已关闭</string>
-    <string name="quick_settings_wifi_tether_on_label">Wifi共享网络已打开</string>
-    <string name="quick_settings_wifi_tether_off_label">Wifi共享网络已关闭</string>
-    <string name="quick_settings_bt_tether_on_label">蓝牙共享网络已打开</string>
-    <string name="quick_settings_bt_tether_off_label">蓝牙共享网络已关闭</string>
-    <string name="quick_settings_usb_tether_on_label">USB共享网络已打开</string>
-    <string name="quick_settings_usb_tether_off_label">USB共享网络已关闭</string>
-    <string name="quick_settings_sync_on_label">数据同步已打开</string>
-    <string name="quick_settings_sync_off_label">数据同步已关闭</string>
-    <string name="quick_settings_twog_on_label">仅使用2G网络已打开</string>
-    <string name="quick_settings_twog_off_label">仅使用2G网络已关闭</string>
-    <string name="quick_settings_lte_on_label">LTE网络已打开</string>
-    <string name="quick_settings_lte_off_label">LTE网络已关闭</string>
-    <string name="quick_settings_gps_on_label">GPS已打开</string>
-    <string name="quick_settings_gps_off_label">GPS已关闭</string>
-    <string name="quick_settings_data_on_label">数据网络已打开</string>
-    <string name="quick_settings_data_off_label">数据网络已关闭</string>
-    <string name="quick_settings_navbar_hide_on_label">隐藏导航栏已打开</string>
-    <string name="quick_settings_navbar_hide_off_label">隐藏导航栏已关闭</string>
-    <string name="quick_settings_quiet_hours_on_label">静音时段已打开</string>
-    <string name="quick_settings_quiet_hours_off_label">静音时段已关闭</string>
-    <string name="quick_settings_sound_on">声音已打开</string>
-    <string name="quick_settings_statusbar_on_label">状态栏已打开</string>
-    <string name="quick_settings_statusbar_off_label">状态栏已关闭</string>
-    <string name="quick_settings_swaggersuntoast">星期天真是屌爆了！</string>
-    <string name="quick_settings_screenshot">屏幕截图</string>
-
-    <!--  RamBar -->
-    <string name="memory">RAM</string>
-    <string name="service_background_processes"><xliff:g id="memory">%1$s</xliff:g> 空闲</string>
-    <string name="service_foreground_processes"><xliff:g id="memory">%1$s</xliff:g> 使用</string>
-    <string name="service_process_name"><xliff:g id="process">%1$s</xliff:g></string>
-    <string name="service_client_name"><xliff:g id="client_name">%1$s</xliff:g></string>
-    <string name="service_started_by_app">已运行应用程序</string>
-    <string name="running_processes_item_description_s_s"><xliff:g id="numprocess">%1$d</xliff:g> 进程和 <xliff:g id="numservices">%2$d</xliff:g> 服务</string>
-    <string name="running_processes_item_description_s_p"><xliff:g id="numprocess">%1$d</xliff:g> 进程和 <xliff:g id="numservices">%2$d</xliff:g> 服务</string>
-    <string name="running_processes_item_description_p_s"><xliff:g id="numprocess">%1$d</xliff:g> 进程和 <xliff:g id="numservices">%2$d</xliff:g> 服务</string>
-    <string name="running_processes_item_description_p_p"><xliff:g id="numprocess">%1$d</xliff:g> 进程和 <xliff:g id="numservices">%2$d</xliff:g> 服务</string>
-    <string name="running_process_item_user_label">用户： <xliff:g id="user_name">%1$s</xliff:g></string>
 </resources>

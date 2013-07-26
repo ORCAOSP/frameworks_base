@@ -17,7 +17,6 @@
 package com.android.internal.policy.impl.keyguard;
 
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -43,7 +42,7 @@ import com.android.internal.R;
 public class ClockView extends RelativeLayout {
     private static final String ANDROID_CLOCK_FONT_FILE = "/system/fonts/AndroidClock.ttf";
     private final static String M12 = "h:mm";
-    private final static String M24 = "kk:mm";
+    private final static String M24 = "HH:mm";
 
     private Calendar mCalendar;
     private String mFormat;
@@ -215,8 +214,6 @@ public class ClockView extends RelativeLayout {
 
         CharSequence newTime = DateFormat.format(mFormat, mCalendar);
         mTimeView.setText(newTime);
-        mTimeView.setTextColor(Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.LOCKSCREEN_CUSTOM_TEXT_COLOR, 0xFFFFFFFF));
         mAmPm.setIsMorning(mCalendar.get(Calendar.AM_PM) == 0);
     }
 

@@ -1281,11 +1281,11 @@ status_t compileResourceFile(Bundle* bundle,
                         curIsFormatted = false;
                         // Untranslatable strings must only exist in the default [empty] locale
                         if (locale.size() > 0) {
-                            fprintf(stderr, "aapt: error: string '%s' in %s marked untranslatable but exists"
+                            fprintf(stderr, "aapt: warning: string '%s' in %s marked untranslatable but exists"
                                     " in locale '%s'\n", String8(name).string(),
                                     bundle->getResourceSourceDirs()[0],
                                     locale.string());
-                            hasErrors = localHasErrors = true;
+                            // hasErrors = localHasErrors = true;
                         } else {
                             // Intentionally empty block:
                             //
@@ -2512,9 +2512,9 @@ ResourceTable::addLocalization(const String16& name, const String8& locale)
  * Flag various sorts of localization problems.  '+' indicates checks already implemented;
  * '-' indicates checks that will be implemented in the future.
  *
- * + A localized string for which no default-locale version exists => error
+ * + A localized string for which no default-locale version exists => warning
  * + A string for which no version in an explicitly-requested locale exists => warning
- * + A localized translation of an translateable="false" string => error
+ * + A localized translation of an translateable="false" string => warning
  * - A localized string not provided in every locale used by the table
  */
 status_t
@@ -2532,15 +2532,15 @@ ResourceTable::validateLocalizations(void)
 #ifdef SHOW_DEFAULT_TRANSLATION_WARNINGS
         // Look for strings with no default localization
         if (configSet.count(defaultLocale) == 0) {
-            fprintf(stderr, "aapt: error: string '%s' has no default translation in %s; found:",
+            fprintf(stdout, "aapt: warning: string '%s' has no default translation in %s; found:",
                     String8(nameIter->first).string(), mBundle->getResourceSourceDirs()[0]);
             for (set<String8>::const_iterator locales = configSet.begin();
                  locales != configSet.end();
                  locales++) {
-                fprintf(stderr, " %s", (*locales).string());
+                fprintf(stdout, " %s", (*locales).string());
             }
-            fprintf(stderr, "\n");
-            err = BAD_VALUE;
+            fprintf(stdout, "\n");
+            // !!! TODO: throw an error here in some circumstances
         }
 #endif
 #ifdef SHOW_LOCALIZATION_WARNINGS
@@ -2819,7 +2819,7 @@ status_t ResourceTable::flatten(Bundle* bundle, const sp<AaptFile>& dest)
                 ConfigDescription config = t->getUniqueConfigs().itemAt(ci);
 
                 NOISY(printf("Writing config %d config: imsi:%d/%d lang:%c%c cnt:%c%c "
-                     "orien:%d uiInverted:%d ui:%d touch:%d density:%d key:%d inp:%d nav:%d sz:%dx%d "
+                     "orien:%d ui:%d touch:%d density:%d key:%d inp:%d nav:%d sz:%dx%d "
                      "sw%ddp w%ddp h%ddp dir:%d\n",
                       ti+1,
                       config.mcc, config.mnc,
@@ -2828,7 +2828,6 @@ status_t ResourceTable::flatten(Bundle* bundle, const sp<AaptFile>& dest)
                       config.country[0] ? config.country[0] : '-',
                       config.country[1] ? config.country[1] : '-',
                       config.orientation,
-                      config.uiInvertedMode,
                       config.uiMode,
                       config.touchscreen,
                       config.density,
@@ -2863,7 +2862,7 @@ status_t ResourceTable::flatten(Bundle* bundle, const sp<AaptFile>& dest)
                 tHeader->entriesStart = htodl(typeSize);
                 tHeader->config = config;
                 NOISY(printf("Writing type %d config: imsi:%d/%d lang:%c%c cnt:%c%c "
-                     "orien:%d uiInverted:%d ui:%d touch:%d density:%d key:%d inp:%d nav:%d sz:%dx%d "
+                     "orien:%d ui:%d touch:%d density:%d key:%d inp:%d nav:%d sz:%dx%d "
                      "sw%ddp w%ddp h%ddp dir:%d\n",
                       ti+1,
                       tHeader->config.mcc, tHeader->config.mnc,
@@ -2872,7 +2871,6 @@ status_t ResourceTable::flatten(Bundle* bundle, const sp<AaptFile>& dest)
                       tHeader->config.country[0] ? tHeader->config.country[0] : '-',
                       tHeader->config.country[1] ? tHeader->config.country[1] : '-',
                       tHeader->config.orientation,
-                      tHeader->config.uiInvertedMode,
                       tHeader->config.uiMode,
                       tHeader->config.touchscreen,
                       tHeader->config.density,

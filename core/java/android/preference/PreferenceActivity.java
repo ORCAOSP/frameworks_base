@@ -21,7 +21,6 @@ import android.app.FragmentBreadCrumbs;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.ListActivity;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -32,7 +31,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -152,10 +150,6 @@ public abstract class PreferenceActivity extends ListActivity implements
      */
     public static final String EXTRA_SHOW_FRAGMENT_TITLE = ":android:show_fragment_title";
 
-    // fix for title text for startPreferencePanel in a single pane mode
-    /** @hide */
-    public static final String EXTRA_SHOW_FRAGMENT_TITLE_TEXT = ":android:show_fragment_title_text";
-
     /**
      * When starting this activity and using {@link #EXTRA_SHOW_FRAGMENT},
      * this extra can also be specify to supply the short title to be shown for
@@ -163,11 +157,6 @@ public abstract class PreferenceActivity extends ListActivity implements
      */
     public static final String EXTRA_SHOW_FRAGMENT_SHORT_TITLE
             = ":android:show_fragment_short_title";
-
-    // fix for short title text for startPreferencePanel in a single pane mode
-    /** @hide */
-    public static final String EXTRA_SHOW_FRAGMENT_SHORT_TITLE_TEXT
-            = ":android:show_fragment_short_title_text";
 
     /**
      * When starting this activity, the invoking Intent can contain this extra
@@ -553,13 +542,6 @@ public abstract class PreferenceActivity extends ListActivity implements
                     CharSequence initialShortTitleStr = initialShortTitle != 0
                             ? getText(initialShortTitle) : null;
                     showBreadCrumbs(initialTitleStr, initialShortTitleStr);
-                } else {
-                    CharSequence initialTitleStr = getIntent().getStringExtra(EXTRA_SHOW_FRAGMENT_TITLE_TEXT);
-                    if ( initialTitleStr != null ) {
-                        CharSequence initialShortTitleStr
-                                = getIntent().getStringExtra(EXTRA_SHOW_FRAGMENT_SHORT_TITLE_TEXT);
-                        showBreadCrumbs(initialTitleStr, initialShortTitleStr);
-                    }
                 }
 
             } else {
@@ -593,13 +575,6 @@ public abstract class PreferenceActivity extends ListActivity implements
                 CharSequence initialShortTitleStr = initialShortTitle != 0
                         ? getText(initialShortTitle) : null;
                 showBreadCrumbs(initialTitleStr, initialShortTitleStr);
-            } else {
-                CharSequence initialTitleStr = getIntent().getStringExtra(EXTRA_SHOW_FRAGMENT_TITLE_TEXT);
-                if ( initialTitleStr != null ) {
-                    CharSequence initialShortTitleStr
-                            = getIntent().getStringExtra(EXTRA_SHOW_FRAGMENT_SHORT_TITLE_TEXT);
-                    showBreadCrumbs(initialTitleStr, initialShortTitleStr);
-                }
             }
         } else if (mHeaders.size() > 0) {
             setListAdapter(new HeaderAdapter(this, mHeaders));
@@ -704,10 +679,9 @@ public abstract class PreferenceActivity extends ListActivity implements
      * enough.
      */
     public boolean onIsMultiPane() {
-       boolean preferMultiPane = Settings.System.getBoolean(
-                getContentResolver(), Settings.System.FORCE_DUAL_PANEL, getResources().getBoolean(
-                com.android.internal.R.bool.preferences_prefer_dual_pane));
-       return preferMultiPane;
+        boolean preferMultiPane = getResources().getBoolean(
+                com.android.internal.R.bool.preferences_prefer_dual_pane);
+        return preferMultiPane;
     }
 
     /**
@@ -729,7 +703,13 @@ public abstract class PreferenceActivity extends ListActivity implements
      * show for the initial UI.
      */
     public Header onGetInitialHeader() {
-        return mHeaders.get(0);
+        for (int i=0; i<mHeaders.size(); i++) {
+            Header h = mHeaders.get(i);
+            if (h.fragment != null) {
+                return h;
+            }
+        }
+        throw new IllegalStateException("Must have at least one header with a fragment");
     }
 
     /**
@@ -1052,21 +1032,7 @@ public abstract class PreferenceActivity extends ListActivity implements
         intent.putExtra(EXTRA_NO_HEADERS, true);
         return intent;
     }
-
-    // fix for title text for startPreferencePanel in a single pane mode
-    /** @hide */
-    public Intent onBuildStartFragmentIntent(String fragmentName, Bundle args,
-            CharSequence titleText, CharSequence shortTitleText) {
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.setClass(this, getClass());
-        intent.putExtra(EXTRA_SHOW_FRAGMENT, fragmentName);
-        intent.putExtra(EXTRA_SHOW_FRAGMENT_ARGUMENTS, args);
-        intent.putExtra(EXTRA_SHOW_FRAGMENT_TITLE_TEXT, titleText);
-        intent.putExtra(EXTRA_SHOW_FRAGMENT_SHORT_TITLE_TEXT, shortTitleText);
-        intent.putExtra(EXTRA_NO_HEADERS, true);
-        return intent;
-    }
-
+    
     /**
      * Like {@link #startWithFragment(String, Bundle, Fragment, int, int, int)}
      * but uses a 0 titleRes.
@@ -1096,18 +1062,6 @@ public abstract class PreferenceActivity extends ListActivity implements
     public void startWithFragment(String fragmentName, Bundle args,
             Fragment resultTo, int resultRequestCode, int titleRes, int shortTitleRes) {
         Intent intent = onBuildStartFragmentIntent(fragmentName, args, titleRes, shortTitleRes);
-        if (resultTo == null) {
-            startActivity(intent);
-        } else {
-            resultTo.startActivityForResult(intent, resultRequestCode);
-        }
-    }
-
-    // fix for title text for startPreferencePanel in a single pane mode
-    /** @hide */
-    public void startWithFragment(String fragmentName, Bundle args, Fragment resultTo,
-            int resultRequestCode, CharSequence titleText, CharSequence shortTitleText) {
-        Intent intent = onBuildStartFragmentIntent(fragmentName, args, titleText, shortTitleText);
         if (resultTo == null) {
             startActivity(intent);
         } else {
@@ -1219,6 +1173,9 @@ public abstract class PreferenceActivity extends ListActivity implements
             getFragmentManager().popBackStack(BACK_STACK_PREFS,
                     FragmentManager.POP_BACK_STACK_INCLUSIVE);
         } else {
+            if (header.fragment == null) {
+                throw new IllegalStateException("can't switch to header that has no fragment");
+            }
             int direction = mHeaders.indexOf(header) - mHeaders.indexOf(mCurHeader);
             switchToHeaderInner(header.fragment, header.fragmentArguments, direction);
             setSelectedHeader(header);
@@ -1311,12 +1268,7 @@ public abstract class PreferenceActivity extends ListActivity implements
     public void startPreferencePanel(String fragmentClass, Bundle args, int titleRes,
             CharSequence titleText, Fragment resultTo, int resultRequestCode) {
         if (mSinglePane) {
-            // fix for title text for startPreferencePanel in a single pane mode
-            if (titleRes == 0 && titleText != null) {
-                startWithFragment(fragmentClass, args, resultTo, resultRequestCode, titleText, null);
-            } else {
-                startWithFragment(fragmentClass, args, resultTo, resultRequestCode, titleRes, 0);
-            }
+            startWithFragment(fragmentClass, args, resultTo, resultRequestCode, titleRes, 0);
         } else {
             Fragment f = Fragment.instantiate(this, fragmentClass, args);
             if (resultTo != null) {

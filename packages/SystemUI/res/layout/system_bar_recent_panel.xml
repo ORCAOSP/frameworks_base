@@ -41,15 +41,16 @@
         <com.android.systemui.recent.RecentsVerticalScrollView android:id="@+id/recents_container"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="@dimen/status_bar_recents_right_glow_margin"
+            android:layout_marginEnd="@dimen/status_bar_recents_right_glow_margin"
             android:divider="@null"
             android:stackFromBottom="true"
             android:fadingEdge="vertical"
             android:scrollbars="none"
             android:fadingEdgeLength="20dip"
-            android:layout_gravity="bottom|left"
+            android:layout_gravity="bottom|start"
             android:clipToPadding="false"
-            android:clipChildren="false">
+            android:clipChildren="false"
+            android:fitsSystemWindows="true">
 
             <LinearLayout android:id="@+id/recents_linear_layout"
                 android:layout_width="wrap_content"
@@ -61,66 +62,11 @@
 
         </com.android.systemui.recent.RecentsVerticalScrollView>
 
-        <ImageView android:id="@+id/recents_kill_all_button"
-            android:layout_gravity="bottom|left"
-            android:layout_marginTop="10dp"
-            android:layout_marginRight="10dp"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:src="@drawable/ic_recents_clear" />
-
-    <view class="com.android.systemui.recent.LinearColorBar"
-            android:id="@+id/ram_usage_bar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="-5dp"
-            android:orientation="horizontal"
-            android:clipChildren="false"
-            android:clipToPadding="false"
-            android:paddingTop="30dp"
-            android:paddingLeft="4dp"
-            android:paddingRight="4dp"
-            android:paddingBottom="1dp"
-            android:layout_marginLeft="@*android:dimen/preference_fragment_padding_side"
-            android:layout_marginRight="@*android:dimen/preference_fragment_padding_side">
-        <TextView android:id="@+id/foregroundText"
-            android:layout_width="0px"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:focusable="true"
-            android:gravity="left|bottom"
-            android:textAppearance="?android:attr/textAppearanceSmallInverse"
-            android:textColor="#000"
-            android:singleLine="true" />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="0"
-            android:layout_marginTop="-20dp"
-            android:textAppearance="?android:attr/textAppearanceSmallInverse"
-            android:textColor="#ccc"
-            android:shadowColor="#000"
-            android:shadowRadius="5"
-            android:textStyle="bold"
-            android:singleLine="true"
-            android:text="@string/memory" />
-        <TextView android:id="@+id/backgroundText"
-            android:layout_gravity="center_vertical|right"
-            android:layout_width="0px"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:focusable="true"
-            android:gravity="right|bottom"
-            android:textAppearance="?android:attr/textAppearanceSmallInverse"
-            android:textColor="#000"
-            android:singleLine="true" />
-    </view>
-
         <include layout="@layout/system_bar_no_recent_apps"
             android:id="@+id/recents_no_apps"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginLeft="58dip"
+            android:layout_marginStart="58dip"
             android:layout_marginBottom="36dip"
             android:visibility="invisible" />
 
@@ -131,7 +77,7 @@
         android:layout_width="match_parent"
         android:layout_height="@*android:dimen/system_bar_height"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
     />
 
 

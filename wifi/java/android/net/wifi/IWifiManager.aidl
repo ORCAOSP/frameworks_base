@@ -19,7 +19,6 @@ package android.net.wifi;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.ScanResult;
-import android.net.wifi.WifiChannel;
 import android.net.DhcpInfo;
 
 import android.os.Messenger;
@@ -44,9 +43,9 @@ interface IWifiManager
 
     boolean pingSupplicant();
 
-    void startScan(boolean forceActive);
+    void startScan();
 
-    List<ScanResult> getScanResults();
+    List<ScanResult> getScanResults(String callingPackage);
 
     void disconnect();
 
@@ -70,13 +69,11 @@ interface IWifiManager
 
     boolean isDualBandSupported();
 
-    boolean isIbssSupported();
-
-    List<WifiChannel> getSupportedChannels();
-
     boolean saveConfiguration();
 
     DhcpInfo getDhcpInfo();
+
+    boolean isScanAlwaysAvailable();
 
     boolean acquireWifiLock(IBinder lock, int lockType, String tag, in WorkSource ws);
 

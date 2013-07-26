@@ -16,8 +16,10 @@
 
 package com.android.systemui.statusbar;
 
+
 import android.app.Notification;
 import android.graphics.Bitmap;
+import android.service.notification.StatusBarNotification;
 import android.os.IBinder;
 import android.view.View;
 import android.widget.ImageView;
@@ -83,12 +85,6 @@ public class NotificationData {
             return NotificationData.getUserExpanded(row);
         }
         /**
-         * Return whether the entry has been manually cleared by the user.
-         */
-        public boolean userCleared() {
-            return NotificationData.getUserCleared(row);
-        }
-        /**
          * Set the flag indicating that this was manually expanded by the user.
          */
         public boolean setUserExpanded(boolean userExpanded) {
@@ -113,10 +109,10 @@ public class NotificationData {
         public int compare(Entry a, Entry b) {
             final StatusBarNotification na = a.notification;
             final StatusBarNotification nb = b.notification;
-            int d = na.score - nb.score;
+            int d = na.getScore() - nb.getScore();
             return (d != 0)
                 ? d
-                : (int)(na.notification.when - nb.notification.when);
+                : (int)(na.getNotification().when - nb.getNotification().when);
         }
     };
 
@@ -249,19 +245,5 @@ public class NotificationData {
      */
     public static boolean setUserLocked(View row, boolean userLocked) {
         return writeBooleanTag(row, R.id.user_lock_tag, userLocked);
-    }
-
-    /**
-     * Return whether the entry was cleared by the user.
-     */
-    public static boolean getUserCleared(View row) {
-        return readBooleanTag(row, R.id.user_cleared_tag);
-    }
-
-    /**
-     * Set whether the entry is being cleared by the user.
-     */
-    public static boolean setUserCleared(View row) {
-        return writeBooleanTag(row, R.id.user_cleared_tag, true);
     }
 }

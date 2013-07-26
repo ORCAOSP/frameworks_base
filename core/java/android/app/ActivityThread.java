@@ -18,6 +18,13 @@
 
 package android.app;
 
+import com.android.internal.app.IAssetRedirectionManager;
+import com.android.internal.os.BinderInternal;
+import com.android.internal.os.RuntimeInit;
+import com.android.internal.os.SamplingProfilerIntegration;
+
+import org.apache.harmony.xnet.provider.jsse.OpenSSLSocketImpl;
+
 import android.app.backup.BackupAgent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentCallbacks2;
@@ -26,11 +33,10 @@ import android.content.ContentProvider;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.IContentProvider;
-import android.content.Intent;
 import android.content.IIntentReceiver;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.IPackageManager;
 import android.content.pm.InstrumentationInfo;
 import android.content.pm.PackageInfo;
@@ -49,7 +55,6 @@ import android.database.sqlite.SQLiteDebug;
 import android.database.sqlite.SQLiteDebug.DbStats;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.hardware.display.DisplayManager;
 import android.hardware.display.DisplayManagerGlobal;
 import android.net.IConnectivityManager;
 import android.net.Proxy;
@@ -74,7 +79,6 @@ import android.os.ServiceManager;
 import android.os.StrictMode;
 import android.os.SystemClock;
 import android.os.SystemProperties;
-import android.text.TextUtils;
 import android.os.Trace;
 import android.os.UserHandle;
 import android.provider.Settings;
@@ -99,14 +103,9 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.WindowManagerGlobal;
 import android.renderscript.RenderScript;
+import android.security.AndroidKeyStoreProvider;
 
-import com.android.internal.app.IAssetRedirectionManager;
-import com.android.internal.os.BinderInternal;
-import com.android.internal.os.RuntimeInit;
-import com.android.internal.os.SamplingProfilerIntegration;
 import com.android.internal.util.Objects;
-
-import org.apache.harmony.xnet.provider.jsse.OpenSSLSocketImpl;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -130,6 +129,9 @@ import libcore.io.EventLogger;
 import libcore.io.IoUtils;
 
 import dalvik.system.CloseGuard;
+import dalvik.system.VMRuntime;
+import android.os.SystemProperties;
+import java.lang.*;
 
 final class SuperNotCalledException extends AndroidRuntimeException {
     public SuperNotCalledException(String msg) {
@@ -201,7 +203,8 @@ public final class ActivityThread {
             = new ArrayList<Application>();
     // set of instantiated backup agents, keyed by package name
     final HashMap<String, BackupAgent> mBackupAgents = new HashMap<String, BackupAgent>();
-    static final ThreadLocal<ActivityThread> sThreadLocal = new ThreadLocal<ActivityThread>();
+    /** Reference to singleton {@link ActivityThread} */
+    private static ActivityThread sCurrentActivityThread;
     Instrumentation mInstrumentation;
     String mInstrumentationAppDir = null;
     String mInstrumentationAppLibraryDir = null;
@@ -433,6 +436,7 @@ public final class ActivityThread {
         ComponentName instrumentationName;
         Bundle instrumentationArgs;
         IInstrumentationWatcher instrumentationWatcher;
+        IUiAutomationConnection instrumentationUiAutomationConnection;
         int debugMode;
         boolean enableOpenGlTrace;
         boolean restrictedBackupMode;
@@ -545,6 +549,12 @@ public final class ActivityThread {
     static final class UpdateCompatibilityData {
         String pkg;
         CompatibilityInfo info;
+    }
+
+    static final class RequestActivityExtras {
+        IBinder activityToken;
+        IBinder requestToken;
+        int requestType;
     }
     
     private native void dumpGraphicsInfo(FileDescriptor fd);
@@ -737,9 +747,10 @@ public final class ActivityThread {
                 ComponentName instrumentationName, String profileFile,
                 ParcelFileDescriptor profileFd, boolean autoStopProfiler,
                 Bundle instrumentationArgs, IInstrumentationWatcher instrumentationWatcher,
-                int debugMode, boolean enableOpenGlTrace, boolean isRestrictedBackupMode,
-                boolean persistent, Configuration config, CompatibilityInfo compatInfo,
-                Map<String, IBinder> services, Bundle coreSettings) {
+                IUiAutomationConnection instrumentationUiConnection, int debugMode,
+                boolean enableOpenGlTrace, boolean isRestrictedBackupMode, boolean persistent,
+                Configuration config, CompatibilityInfo compatInfo, Map<String, IBinder> services,
+                Bundle coreSettings) {
 
             if (services != null) {
                 // Setup the service cache in the ServiceManager
@@ -755,6 +766,7 @@ public final class ActivityThread {
             data.instrumentationName = instrumentationName;
             data.instrumentationArgs = instrumentationArgs;
             data.instrumentationWatcher = instrumentationWatcher;
+            data.instrumentationUiAutomationConnection = instrumentationUiConnection;
             data.debugMode = debugMode;
             data.enableOpenGlTrace = enableOpenGlTrace;
             data.restrictedBackupMode = isRestrictedBackupMode;
@@ -1121,6 +1133,16 @@ public final class ActivityThread {
             queueOrSendMessage(H.UNSTABLE_PROVIDER_DIED, provider);
         }
 
+        @Override
+        public void requestActivityExtras(IBinder activityToken, IBinder requestToken,
+                int requestType) {
+            RequestActivityExtras cmd = new RequestActivityExtras();
+            cmd.activityToken = activityToken;
+            cmd.requestToken = requestToken;
+            cmd.requestType = requestType;
+            queueOrSendMessage(H.REQUEST_ACTIVITY_EXTRAS, cmd);
+        }
+
         private void printRow(PrintWriter pw, String format, Object...objs) {
             pw.println(String.format(format, objs));
         }
@@ -1186,6 +1208,7 @@ public final class ActivityThread {
         public static final int TRIM_MEMORY             = 140;
         public static final int DUMP_PROVIDER           = 141;
         public static final int UNSTABLE_PROVIDER_DIED  = 142;
+        public static final int REQUEST_ACTIVITY_EXTRAS = 143;
         String codeToString(int code) {
             if (DEBUG_MESSAGES) {
                 switch (code) {
@@ -1232,6 +1255,7 @@ public final class ActivityThread {
                     case TRIM_MEMORY: return "TRIM_MEMORY";
                     case DUMP_PROVIDER: return "DUMP_PROVIDER";
                     case UNSTABLE_PROVIDER_DIED: return "UNSTABLE_PROVIDER_DIED";
+                    case REQUEST_ACTIVITY_EXTRAS: return "REQUEST_ACTIVITY_EXTRAS";
                 }
             }
             return Integer.toString(code);
@@ -1443,6 +1467,9 @@ public final class ActivityThread {
                 case UNSTABLE_PROVIDER_DIED:
                     handleUnstableProviderDied((IBinder)msg.obj, false);
                     break;
+                case REQUEST_ACTIVITY_EXTRAS:
+                    handleRequestActivityExtras((RequestActivityExtras)msg.obj);
+                    break;
             }
             if (DEBUG_MESSAGES) Slog.v(TAG, "<<< done: " + codeToString(msg.what));
         }
@@ -1576,18 +1603,21 @@ public final class ActivityThread {
             if (mScale != peer.mScale) {
                 return false;
             }
-            if (mIsThemeable != peer.mIsThemeable) {
-                return false;
-            }
-            return true;
+            return mIsThemeable == peer.mIsThemeable;
         }
     }
 
     public static ActivityThread currentActivityThread() {
-        return sThreadLocal.get();
+        return sCurrentActivityThread;
     }
 
     public static String currentPackageName() {
+        ActivityThread am = currentActivityThread();
+        return (am != null && am.mBoundApplication != null)
+            ? am.mBoundApplication.appInfo.packageName : null;
+    }
+
+    public static String currentProcessName() {
         ActivityThread am = currentActivityThread();
         return (am != null && am.mBoundApplication != null)
             ? am.mBoundApplication.processName : null;
@@ -1689,7 +1719,8 @@ public final class ActivityThread {
             CompatibilityInfo compInfo) {
         ResourcesKey key = new ResourcesKey(resDir,
                 displayId, overrideConfiguration,
-                compInfo.applicationScale, compInfo.isThemeable);
+                compInfo.applicationScale,
+                compInfo.isThemeable);
         Resources r;
         synchronized (mPackages) {
             // Resources is app scale dependent.
@@ -1721,18 +1752,6 @@ public final class ActivityThread {
             return null;
         }
 
-        /* Attach theme information to the resulting AssetManager when appropriate. */
-        Configuration themeConfig = getConfiguration();
-        if (compInfo.isThemeable && themeConfig != null) {
-            if (themeConfig.customTheme == null) {
-                themeConfig.customTheme = CustomTheme.getBootTheme();
-            }
-
-            if (!TextUtils.isEmpty(themeConfig.customTheme.getThemePackageName())) {
-                attachThemeAssets(assets, themeConfig.customTheme);
-            }
-        }
-
         //Slog.i(TAG, "Resource: key=" + key + ", display metrics=" + metrics);
         DisplayMetrics dm = getDisplayMetricsLocked(displayId, null);
         dm.overrideHook(assets, ExtendedPropertiesUtils.OverrideMode.ExtendedProperties);
@@ -1749,6 +1768,18 @@ public final class ActivityThread {
         } else {
             config = getConfiguration();
         }
+
+        /* Attach theme information to the resulting AssetManager when appropriate. */
+        if (compInfo.isThemeable && config != null) {
+            if (config.customTheme == null) {
+                config.customTheme = CustomTheme.getBootTheme();
+            }
+
+            if (!TextUtils.isEmpty(config.customTheme.getThemePackageName())) {
+                attachThemeAssets(assets, config.customTheme);
+            }
+        }
+
         r = new Resources(assets, dm, config, compInfo);
         if (false) {
             Slog.i(TAG, "Created app resources " + resDir + " " + r + ": "
@@ -1789,8 +1820,8 @@ public final class ActivityThread {
      *
      * @param assets
      * @param theme
-     * @return true if the AssetManager is now theme-aware; false otherwise
-     *         this can fail, for example, if the theme package has been
+     * @return true if the AssetManager is now theme-aware; false otherwise.
+     *         This can fail, for example, if the theme package has been been
      *         removed and the theme manager has yet to revert formally back to
      *         the framework default.
      */
@@ -2465,6 +2496,23 @@ public final class ActivityThread {
         performNewIntents(data.token, data.intents);
     }
 
+    public void handleRequestActivityExtras(RequestActivityExtras cmd) {
+        Bundle data = new Bundle();
+        ActivityClientRecord r = mActivities.get(cmd.activityToken);
+        if (r != null) {
+            r.activity.getApplication().dispatchOnProvideAssistData(r.activity, data);
+            r.activity.onProvideAssistData(data);
+        }
+        if (data.isEmpty()) {
+            data = null;
+        }
+        IActivityManager mgr = ActivityManagerNative.getDefault();
+        try {
+            mgr.reportTopActivityExtras(cmd.requestToken, data);
+        } catch (RemoteException e) {
+        }
+    }
+    
     private static final ThreadLocal<Intent> sCurrentBroadcastIntent = new ThreadLocal<Intent>();
 
     /**
@@ -4001,6 +4049,10 @@ public final class ActivityThread {
             if (r != null) {
                 if (DEBUG_CONFIGURATION) Slog.v(TAG, "Changing resources "
                         + r + " config to: " + config);
+                int displayId = entry.getKey().mDisplayId;
+                boolean isDefaultDisplay = (displayId == Display.DEFAULT_DISPLAY);
+                DisplayMetrics dm = defaultDisplayMetrics;
+                Configuration overrideConfig = entry.getKey().mOverrideConfiguration;
                 boolean themeChanged = (changes & ActivityInfo.CONFIG_THEME_RESOURCE) != 0;
                 if (themeChanged) {
                     AssetManager am = r.getAssets();
@@ -4011,10 +4063,6 @@ public final class ActivityThread {
                         }
                     }
                 }
-                int displayId = entry.getKey().mDisplayId;
-                boolean isDefaultDisplay = (displayId == Display.DEFAULT_DISPLAY);
-                DisplayMetrics dm = defaultDisplayMetrics;
-                Configuration overrideConfig = entry.getKey().mOverrideConfiguration;
                 if (!isDefaultDisplay || overrideConfig != null) {
                     if (tmpConfig == null) {
                         tmpConfig = new Configuration();
@@ -4327,6 +4375,33 @@ public final class ActivityThread {
 
         // send up app name; do this *before* waiting for debugger
         Process.setArgV0(data.processName);
+
+        String str  = SystemProperties.get("dalvik.vm.heaputilization", "" );
+        if( !str.equals("") ){
+            float heapUtil = Float.valueOf(str.trim()).floatValue();
+            VMRuntime.getRuntime().setTargetHeapUtilization(heapUtil);
+        }
+        int heapMinFree  = SystemProperties.getInt("dalvik.vm.heapMinFree", 0 );
+        if( heapMinFree > 0 ){
+            VMRuntime.getRuntime().setTargetHeapMinFree(heapMinFree);
+        }
+        int heapConcurrentStart  = SystemProperties.getInt("dalvik.vm.heapconcurrentstart", 0 );
+        if( heapConcurrentStart > 0 ){
+            VMRuntime.getRuntime().setTargetHeapConcurrentStart(heapConcurrentStart);
+        }
+
+        ////
+        ////If want to set application specific GC paramters, can use
+        ////the following check
+        ////
+        //if( data.processName.equals("com.android.gallery3d")) {
+        //    VMRuntime.getRuntime().setTargetHeapUtilization(0.25f);
+        //    VMRuntime.getRuntime().setTargetHeapMinFree(12*1024*1024);
+        //    VMRuntime.getRuntime().setTargetHeapConcurrentStart(4*1024*1024);
+        //}
+
+
+
         android.ddm.DdmHandleAppName.setAppName(data.processName,
                                                 UserHandle.myUserId());
 
@@ -4448,8 +4523,12 @@ public final class ActivityThread {
 
         // Enable OpenGL tracing if required
         if (data.enableOpenGlTrace) {
-            GLUtils.enableTracing();
+            GLUtils.setTracingLevel(1);
         }
+
+        // Allow application-generated systrace messages if we're debuggable.
+        boolean appTracingAllowed = (data.appInfo.flags&ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        Trace.setAppTracingAllowed(appTracingAllowed);
 
         /**
          * Initialize the default http proxy in this process for the reasons we set the time zone.
@@ -4507,7 +4586,8 @@ public final class ActivityThread {
             }
 
             mInstrumentation.init(this, instrContext, appContext,
-                    new ComponentName(ii.packageName, ii.name), data.instrumentationWatcher);
+                   new ComponentName(ii.packageName, ii.name), data.instrumentationWatcher,
+                   data.instrumentationUiAutomationConnection);
 
             if (mProfiler.profileFile != null && !ii.handleProfiling
                     && mProfiler.profileFd == null) {
@@ -5072,7 +5152,7 @@ public final class ActivityThread {
     }
 
     private void attach(boolean system) {
-        sThreadLocal.set(this);
+        sCurrentActivityThread = this;
         mSystemThread = system;
         if (!system) {
             ViewRootImpl.addFirstDrawHandler(new Runnable() {
@@ -5198,6 +5278,8 @@ public final class ActivityThread {
 
         // Set the reporter for event logging in libcore
         EventLogger.setReporter(new EventLoggingReporter());
+
+        Security.addProvider(new AndroidKeyStoreProvider());
 
         Process.setArgV0("<pre-initialized>");
 

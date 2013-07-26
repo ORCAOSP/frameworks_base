@@ -298,10 +298,17 @@ static jobjectArray android_content_AssetManager_list(JNIEnv* env, jobject clazz
         return NULL;
     }
 
+    jclass cls = env->FindClass("java/lang/String");
+    LOG_FATAL_IF(cls == NULL, "No string class?!?");
+    if (cls == NULL) {
+        delete dir;
+        return NULL;
+    }
+
     size_t N = dir->getFileCount();
 
     jobjectArray array = env->NewObjectArray(dir->getFileCount(),
-                                                g_stringClass, NULL);
+                                                cls, NULL);
     if (array == NULL) {
         delete dir;
         return NULL;
@@ -510,8 +517,7 @@ static void android_content_AssetManager_setConfiguration(JNIEnv* env, jobject c
                                                           jint screenWidth, jint screenHeight,
                                                           jint smallestScreenWidthDp,
                                                           jint screenWidthDp, jint screenHeightDp,
-                                                          jint screenLayout,
-                                                          jint uiInvertedMode, jint uiMode,
+                                                          jint screenLayout, jint uiMode,
                                                           jint sdkVersion)
 {
     AssetManager* am = assetManagerForJavaObject(env, clazz);
@@ -538,7 +544,6 @@ static void android_content_AssetManager_setConfiguration(JNIEnv* env, jobject c
     config.screenWidthDp = (uint16_t)screenWidthDp;
     config.screenHeightDp = (uint16_t)screenHeightDp;
     config.screenLayout = (uint8_t)screenLayout;
-    config.uiInvertedMode = (uint8_t)uiInvertedMode;
     config.uiMode = (uint8_t)uiMode;
     config.sdkVersion = (uint16_t)sdkVersion;
     config.minorVersion = 0;
@@ -685,6 +690,10 @@ static jint android_content_AssetManager_loadResourceValue(JNIEnv* env, jobject 
                                                            jobject outValue,
                                                            jboolean resolve)
 {
+    if (outValue == NULL) {
+         jniThrowNullPointerException(env, "outValue");
+         return NULL;
+    }
     AssetManager* am = assetManagerForJavaObject(env, clazz);
     if (am == NULL) {
         return 0;
@@ -1525,13 +1534,19 @@ static jobjectArray android_content_AssetManager_getArrayStringResource(JNIEnv* 
     }
     const ResTable& res(am->getResources());
 
+    jclass cls = env->FindClass("java/lang/String");
+    LOG_FATAL_IF(cls == NULL, "No string class?!?");
+    if (cls == NULL) {
+        return NULL;
+    }
+
     const ResTable::bag_entry* startOfBag;
     const ssize_t N = res.lockBag(arrayResId, &startOfBag);
     if (N < 0) {
         return NULL;
     }
 
-    jobjectArray array = env->NewObjectArray(N, g_stringClass, NULL);
+    jobjectArray array = env->NewObjectArray(N, cls, NULL);
     if (env->ExceptionCheck()) {
         res.unlockBag(startOfBag);
         return NULL;
@@ -1947,7 +1962,7 @@ static JNINativeMethod gAssetManagerMethods[] = {
         (void*) android_content_AssetManager_getAssetLength },
     { "getAssetRemainingLength", "(I)J",
         (void*) android_content_AssetManager_getAssetRemainingLength },
-    { "addAssetPath",   "(Ljava/lang/String;)I",
+    { "addAssetPathNative", "(Ljava/lang/String;)I",
         (void*) android_content_AssetManager_addAssetPath },
     { "isUpToDate",     "()Z",
         (void*) android_content_AssetManager_isUpToDate },
@@ -1957,7 +1972,7 @@ static JNINativeMethod gAssetManagerMethods[] = {
         (void*) android_content_AssetManager_setLocale },
     { "getLocales",      "()[Ljava/lang/String;",
         (void*) android_content_AssetManager_getLocales },
-    { "setConfiguration", "(IILjava/lang/String;IIIIIIIIIIIIIII)V",
+    { "setConfiguration", "(IILjava/lang/String;IIIIIIIIIIIIII)V",
         (void*) android_content_AssetManager_setConfiguration },
     { "getResourceIdentifier","(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I",
         (void*) android_content_AssetManager_getResourceIdentifier },
@@ -2095,7 +2110,6 @@ int register_android_content_AssetManager(JNIEnv* env)
     jclass stringClass = env->FindClass("java/lang/String");
     LOG_FATAL_IF(stringClass == NULL, "Unable to find class java/lang/String");
     g_stringClass = (jclass)env->NewGlobalRef(stringClass);
-    LOG_FATAL_IF(g_stringClass == NULL, "Unable to create global reference for class java/lang/String");
 
     return AndroidRuntime::registerNativeMethods(env,
             "android/content/res/AssetManager", gAssetManagerMethods, NELEM(gAssetManagerMethods));

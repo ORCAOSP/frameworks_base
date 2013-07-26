@@ -16,6 +16,7 @@
 
 package android.hardware;
 
+import android.app.ActivityThread;
 import android.annotation.SdkConstant;
 import android.annotation.SdkConstant.SdkConstantType;
 import android.content.Context;
@@ -337,7 +338,9 @@ public class Camera {
             mEventHandler = null;
         }
 
-        native_setup(new WeakReference<Camera>(this), cameraId);
+        String packageName = ActivityThread.currentPackageName();
+
+        native_setup(new WeakReference<Camera>(this), cameraId, packageName);
     }
 
     /**
@@ -350,7 +353,9 @@ public class Camera {
         release();
     }
 
-    private native final void native_setup(Object camera_this, int cameraId);
+    private native final void native_setup(Object camera_this, int cameraId,
+                                           String packageName);
+
     private native final void native_release();
 
 
@@ -1493,7 +1498,6 @@ public class Camera {
      * @see #getParameters()
      */
     public void setParameters(Parameters params) {
-        Log.v(TAG, "setParameters:"+params.flatten());
         native_setParameters(params.flatten());
     }
 
@@ -1723,9 +1727,6 @@ public class Camera {
         private static final String KEY_VIDEO_SNAPSHOT_SUPPORTED = "video-snapshot-supported";
         private static final String KEY_VIDEO_STABILIZATION = "video-stabilization";
         private static final String KEY_VIDEO_STABILIZATION_SUPPORTED = "video-stabilization-supported";
-        private static final String KEY_POWER_MODE_SUPPORTED = "power-mode-supported";
-
-        private static final String KEY_POWER_MODE = "power-mode";
 
         // Parameter key suffix for supported values.
         private static final String SUPPORTED_VALUES_SUFFIX = "-values";
@@ -1759,10 +1760,6 @@ public class Camera {
         public static final String ANTIBANDING_50HZ = "50hz";
         public static final String ANTIBANDING_60HZ = "60hz";
         public static final String ANTIBANDING_OFF = "off";
-
-        // Values for POWER MODE
-        public static final String LOW_POWER = "Low_Power";
-        public static final String NORMAL_POWER = "Normal_Power";
 
         // Values for flash mode settings.
         /**
@@ -2379,7 +2376,7 @@ public class Camera {
         }
 
         /**
-         * Sets the maximum and maximum preview fps. This controls the rate of
+         * Sets the minimum and maximum preview fps. This controls the rate of
          * preview frames received in {@link PreviewCallback}. The minimum and
          * maximum preview fps must be one of the elements from {@link
          * #getSupportedPreviewFpsRange}.
@@ -2932,7 +2929,6 @@ public class Camera {
          * @see #getSceneMode()
          */
         public void setSceneMode(String value) {
-            if(getSupportedSceneModes() == null) return;
             set(KEY_SCENE_MODE, value);
         }
 
@@ -2970,7 +2966,6 @@ public class Camera {
          * @see #getFlashMode()
          */
         public void setFlashMode(String value) {
-            if(getSupportedFlashModes() == null) return;
             set(KEY_FLASH_MODE, value);
         }
 
@@ -2984,28 +2979,6 @@ public class Camera {
         public List<String> getSupportedFlashModes() {
             String str = get(KEY_FLASH_MODE + SUPPORTED_VALUES_SUFFIX);
             return split(str);
-        }
-
-        /**
-         * Sets the Power mode.
-         *
-         * @param value Power mode.
-         * @see #getPowerMode()
-         */
-        public void setPowerMode(String value) {
-            set(KEY_POWER_MODE, value);
-        }
-
-        /**
-         * Gets the current power mode setting.
-         *
-         * @return current power mode. null if power mode setting is not
-         *         supported.
-         * @see #POWER_MODE_LOW
-         * @see #POWER_MODE_NORMAL
-         */
-        public String getPowerMode() {
-            return get(KEY_POWER_MODE);
         }
 
         /**
@@ -3621,14 +3594,6 @@ public class Camera {
          */
         public boolean isVideoSnapshotSupported() {
             String str = get(KEY_VIDEO_SNAPSHOT_SUPPORTED);
-            return TRUE.equals(str);
-        }
-
-        /**
-         * @return true if full size video snapshot is supported.
-         */
-        public boolean isPowerModeSupported() {
-            String str = get(KEY_POWER_MODE_SUPPORTED);
             return TRUE.equals(str);
         }
 

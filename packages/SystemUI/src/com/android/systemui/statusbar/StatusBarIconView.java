@@ -72,7 +72,7 @@ public class StatusBarIconView extends AnimatedImageView {
         mNumberPain.setTextSize(scaledPx);
         mNotification = notification;
         mShowNotificationCount = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_NOTIF_COUNT, 0) == 1;
+                Settings.System.STATUS_BAR_NOTIF_COUNT, 0) == 1;
         setContentDescription(notification);
 
         mObserver = GlobalSettingsObserver.getInstance(context);
@@ -85,8 +85,8 @@ public class StatusBarIconView extends AnimatedImageView {
             final float scale = (float)imageBounds / (float)outerBounds;
             setScaleX(scale);
             setScaleY(scale);
-            setAlpha(Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.STATUS_BAR_NOTIF_ICON_OPACITY, 140));
+            final float alpha = res.getFraction(R.dimen.status_bar_icon_drawing_alpha, 1, 1);
+            setAlpha(alpha);
         }
 
         setScaleType(ImageView.ScaleType.CENTER);
@@ -100,8 +100,8 @@ public class StatusBarIconView extends AnimatedImageView {
         final float scale = (float)imageBounds / (float)outerBounds;
         setScaleX(scale);
         setScaleY(scale);
-        setAlpha(Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.STATUS_BAR_NOTIF_ICON_OPACITY, 140));
+        final float alpha = res.getFraction(R.dimen.status_bar_icon_drawing_alpha, 1, 1);
+        setAlpha(alpha);
     }
 
     private static boolean streq(String a, String b) {
@@ -136,13 +136,9 @@ public class StatusBarIconView extends AnimatedImageView {
                 && mIcon.number == icon.number;
         mIcon = icon.clone();
         setContentDescription(icon.contentDescription);
-        if (!iconEquals || force) {
-            Drawable drawable = getIcon(icon);
-            if (drawable == null) {
-                Slog.w(TAG, "No icon for slot " + mSlot);
-                return false;
-            }
-            setImageDrawable(drawable);
+
+        if (!iconEquals) {
+            if (!updateDrawable(false /* no clear */)) return false;
         }
         if (!levelEquals || force) {
             setImageLevel(icon.iconLevel);
@@ -164,6 +160,23 @@ public class StatusBarIconView extends AnimatedImageView {
         if (!visibilityEquals || force) {
             setVisibility(icon.visible ? VISIBLE : GONE);
         }
+        return true;
+    }
+
+    public void updateDrawable() {
+        updateDrawable(true /* with clear */);
+    }
+
+    private boolean updateDrawable(boolean withClear) {
+        Drawable drawable = getIcon(mIcon);
+        if (drawable == null) {
+            Slog.w(TAG, "No icon for slot " + mSlot);
+            return false;
+        }
+        if (withClear) {
+            setImageDrawable(null);
+        }
+        setImageDrawable(drawable);
         return true;
     }
 
@@ -350,12 +363,9 @@ public class StatusBarIconView extends AnimatedImageView {
             }
         }
 
-        void observe() {	
-            mContext.getContentResolver().registerContentObserver(	
-                    Settings.System.getUriFor(Settings.System.STATUSBAR_NOTIF_COUNT),	
-                    false, this);
+        void observe() {
             mContext.getContentResolver().registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.STATUS_BAR_NOTIF_ICON_OPACITY),
+                    Settings.System.getUriFor(Settings.System.STATUS_BAR_NOTIF_COUNT),
                     false, this);
         }
 
@@ -366,11 +376,12 @@ public class StatusBarIconView extends AnimatedImageView {
         @Override
         public void onChange(boolean selfChange) {
             boolean showIconCount = Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.STATUSBAR_NOTIF_COUNT, 0) == 1;
+                    Settings.System.STATUS_BAR_NOTIF_COUNT, 0) == 1;
             for (StatusBarIconView sbiv : mIconViews) {
                 sbiv.mShowNotificationCount = showIconCount;
                 sbiv.set(sbiv.mIcon, true);
             }
         }
     }
+
 }

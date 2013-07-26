@@ -122,18 +122,6 @@ public class KeyCharacterMap implements Parcelable {
     public static final char PICKER_DIALOG_INPUT = '\uEF01';
 
     /**
-     * Private use character denoting a .com suffix
-     * @hide
-     */
-    public static final char DOT_COM_INPUT = '\uEF03';
-
-    /**
-     * Private use character denoting a www. prefix
-     * @hide
-     */
-    public static final char DOT_WWW_INPUT = '\uEF04';
-
-    /**
      * Modifier keys may be chorded with character keys.
      *
      * @see {#link #getModifierBehavior()} for more details.
@@ -191,6 +179,8 @@ public class KeyCharacterMap implements Parcelable {
     private static final int ACCENT_GRAVE_LEGACY = '`';
     private static final int ACCENT_CIRCUMFLEX_LEGACY = '^';
     private static final int ACCENT_TILDE_LEGACY = '~';
+
+    private static final int CHAR_SPACE = ' ';
 
     /**
      * Maps Unicode combining diacritical to display-form dead key.
@@ -485,14 +475,23 @@ public class KeyCharacterMap implements Parcelable {
     }
 
     /**
-     * Get the character that is produced by putting accent on the character c.
+     * Get the character that is produced by combining the dead key producing accent
+     * with the key producing character c.
      * For example, getDeadChar('`', 'e') returns &egrave;.
+     * getDeadChar('^', ' ') returns '^' and getDeadChar('^', '^') returns '^'.
      *
      * @param accent The accent character.  eg. '`'
      * @param c The basic character.
      * @return The combined character, or 0 if the characters cannot be combined.
      */
     public static int getDeadChar(int accent, int c) {
+        if (c == accent || CHAR_SPACE == c) {
+            // The same dead character typed twice or a dead character followed by a
+            // space should both produce the non-combining version of the combining char.
+            // In this case we don't even need to compute the combining character.
+            return accent;
+        }
+
         int combining = sAccentToCombining.get(accent);
         if (combining == 0) {
             return 0;
@@ -507,7 +506,8 @@ public class KeyCharacterMap implements Parcelable {
                 sDeadKeyBuilder.append((char)c);
                 sDeadKeyBuilder.append((char)combining);
                 String result = Normalizer.normalize(sDeadKeyBuilder, Normalizer.Form.NFC);
-                combined = result.length() == 1 ? result.charAt(0) : 0;
+                combined = result.codePointCount(0, result.length()) == 1
+                        ? result.codePointAt(0) : 0;
                 sDeadKeyCache.put(combination, combined);
             }
         }

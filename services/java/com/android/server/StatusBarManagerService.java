@@ -18,6 +18,7 @@ package com.android.server;
 
 import android.app.ActivityManager;
 import android.app.StatusBarManager;
+import android.service.notification.StatusBarNotification;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -35,7 +36,6 @@ import com.android.internal.statusbar.IStatusBar;
 import com.android.internal.statusbar.IStatusBarService;
 import com.android.internal.statusbar.StatusBarIcon;
 import com.android.internal.statusbar.StatusBarIconList;
-import com.android.internal.statusbar.StatusBarNotification;
 import com.android.server.wm.WindowManagerService;
 
 import java.io.FileDescriptor;
@@ -291,7 +291,7 @@ public class StatusBarManagerService extends IStatusBarService.Stub
                                     Settings.System.putString(mContext.getContentResolver(),
                                             Settings.System.FOREGROUND_APP, foregroundTaskPackageName);
                                 }
-                            } catch (RemoteException ex) {
+                            } catch (Exception ex) {
                             }
                         }
                     }
@@ -378,15 +378,6 @@ public class StatusBarManagerService extends IStatusBarService.Stub
                 }
             }
         });
-    }
-
-    @Override
-    public void toggleNotificationShade() {
-        if (mBar != null) {
-            try {
-                mBar.toggleNotificationShade();
-            } catch (RemoteException ex) {}
-        }
     }
 
     @Override

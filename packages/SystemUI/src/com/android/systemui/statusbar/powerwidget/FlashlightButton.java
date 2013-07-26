@@ -3,7 +3,6 @@ package com.android.systemui.statusbar.powerwidget;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.UserHandle;
 import android.provider.Settings;
 
 import com.android.internal.util.cm.TorchConstants;
@@ -32,8 +31,8 @@ public class FlashlightButton extends PowerButton {
 
     @Override
     protected void toggleState(Context context) {
-        boolean bright = Settings.System.getIntForUser(context.getContentResolver(),
-                Settings.System.EXPANDED_FLASH_MODE, 0, UserHandle.USER_CURRENT) == 1;
+        boolean bright = Settings.System.getInt(context.getContentResolver(),
+                Settings.System.EXPANDED_FLASH_MODE, 0) == 1;
         Intent i = new Intent(TorchConstants.ACTION_TOGGLE_STATE);
         i.putExtra(TorchConstants.EXTRA_BRIGHT_MODE, bright);
         context.sendBroadcast(i);

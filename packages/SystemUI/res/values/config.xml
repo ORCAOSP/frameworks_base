@@ -27,7 +27,7 @@
 
     <!-- Whether recents thumbnails should stretch in both x and y to fill their
      ImageView -->
-    <bool name="config_recents_thumbnail_image_fits_to_xy">true</bool>
+    <bool name="config_recents_thumbnail_image_fits_to_xy">false</bool>
 
     <!-- Control whether status bar should distinguish HSPA data icon form UMTS
     data icon on devices -->
@@ -41,7 +41,7 @@
      interface.  This name is in the ComponentName flattened format (package/class)  -->
     <string name="config_systemBarComponent" translatable="false">com.android.systemui.statusbar.tablet.TabletStatusBar</string>
 
-    <!-- Whether or not we show the number in the bar
+    <!-- Whether or not we show the number in the bar.
     <bool name="config_statusBarShowNumber">false</bool> -->
 
     <!-- How many icons may be shown at once in the system bar. Includes any
@@ -103,7 +103,7 @@
     <!-- Enable the "flip settings" panel -->
     <bool name="config_hasFlipSettingsPanel">true</bool>
 
-    <!-- default Navigation Bar transparency. 0-255 -->
-    <integer name="navigation_bar_transparency">204</integer>
+    <!-- Should "4G" be shown instead of "LTE" when the network is NETWORK_TYPE_LTE? -->
+    <bool name="config_show4GForLTE">true</bool>
 </resources>
 

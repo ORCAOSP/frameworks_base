@@ -130,7 +130,7 @@ public class StorageNotification extends StorageEventListener {
 
     private void onStorageStateChangedAsync(String path, String oldState, String newState) {
         boolean isPrimary = mStorageManager.getPrimaryVolume().getPath().equals(path);
-        if (DEBUG) Slog.i(TAG, String.format(
+        Slog.i(TAG, String.format(
                 "Media {%s} state changed from {%s} -> {%s} (primary = %b)", path, oldState, newState, isPrimary));
         if (newState.equals(Environment.MEDIA_SHARED)) {
             /*
@@ -207,8 +207,6 @@ public class StorageNotification extends StorageEventListener {
              */
             Intent intent = new Intent();
             intent.setClass(mContext, com.android.internal.app.ExternalMediaFormatActivity.class);
-            // send the volume's path through to the formatting activity
-            intent.putExtra(com.android.internal.app.ExternalMediaFormatActivity.FORMAT_PATH, path);
             PendingIntent pi = PendingIntent.getActivity(mContext, 0, intent, 0);
 
             setMediaStorageNotification(
@@ -223,8 +221,6 @@ public class StorageNotification extends StorageEventListener {
              */
             Intent intent = new Intent();
             intent.setClass(mContext, com.android.internal.app.ExternalMediaFormatActivity.class);
-            // send the volume's path through to the formatting activity
-            intent.putExtra(com.android.internal.app.ExternalMediaFormatActivity.FORMAT_PATH, path);
             PendingIntent pi = PendingIntent.getActivity(mContext, 0, intent, 0);
 
             setMediaStorageNotification(
