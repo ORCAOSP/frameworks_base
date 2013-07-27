@@ -733,7 +733,6 @@ const ResTable* AssetManager::getResTable(bool required) const
         }
         if (idmap != NULL) {
             delete idmap;
->>>>>>> aosp/jb-mr2-dev
         }
         MY_TRACE_END();
     }
